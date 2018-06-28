@@ -336,7 +336,7 @@ def GetWeightedPredVar(deriveddatapath, yearsTr, yearT, extentDTT, predvarYrsT, 
 		# Use absolute values of correlation coefficeint
 		rvalsDT=abs(rvalsDT)
 	if (weight==0):
-		#print ('No weighting applied!')
+		print ('No weighting applied!')
 		rvalsDT=np.ones((rvalsDT.shape))
 
 	if (outWeights==1):
@@ -344,19 +344,26 @@ def GetWeightedPredVar(deriveddatapath, yearsTr, yearT, extentDTT, predvarYrsT, 
 		predvarYrDT.dump(savedatapath+'predvarYrDT'+varT+icetype+'fm'+str(fmonth)+'pm'+str(pmonth)+'R'+str(region)+str(startYear)+str(yearT)+'.txt')
 	
 	# Calculated weighted forcast data
-	weightedPredvar=[]
+   # Mean and Median for testing
+    
+	weightedPredvarMean=[]
+	weightedPredvarMed=[]    
 	for x in range(predvarYrsDT.shape[0]):
-		weightedPredvar.append(ma.mean(rvalsDT*predvarYrsDT[x]))
+		weightedPredvarMean.append(ma.mean(rvalsDT*predvarYrsDT[x]))
+		weightedPredvarMed.append(ma.median(rvalsDT*predvarYrsDT[x]))
 	
-	weightedPredvarYr = ma.mean(rvalsDT*predvarYrDT)
+	weightedPredvarYrMean = ma.mean(rvalsDT*predvarYrDT)
+	weightedPredvarYrMed = ma.median(rvalsDT*predvarYrDT)    
 	
+	'''
 	if (normalize==1):
 		# Normalize data (doesn't change single var forecasting, may be important for multivar)
 		weightedPredvarN=(weightedPredvar-min(weightedPredvar))/(max(weightedPredvar)-min(weightedPredvar))
 		weightedPredvarYrN=(weightedPredvarYr-min(weightedPredvar))/(max(weightedPredvar)-min(weightedPredvar))
 		return rvalsDT, predvarYrDT, weightedPredvarN, weightedPredvarYrN
 	else:
-		return rvalsDT, predvarYrDT, weightedPredvar, weightedPredvarYr
+	'''
+	return rvalsDT, predvarYrDT, weightedPredvarMean, weightedPredvarMed, weightedPredvarYrMean, weightedPredvarYrMed
 
 
 def get_varDT(Years, Extent):
@@ -637,6 +644,31 @@ def get_pmask(year, month):
 	
 	return pmask
 
+#def get_pmas_month(m, rawdatapath, year, month=4):
+
+def get_pmas_month(rawdatapath, year, month=4):
+    
+	fd = open(rawdatapath+'/PIOMAS/heff/heff.H'+str(year), 'rb')
+	dataP = fromfile(file=fd, dtype='f')
+	dataP = reshape(dataP, [12, 120*360])
+	thickness=dataP[month]
+	#gridP = loadtxt(rawdatapath+'/PIOMAS/grid.dat.txt')
+
+	#lonsP = gridP[0:4320, :].flatten()
+	#latsP = gridP[4320:, :].flatten()
+	#xptsP,yptsP = m(lonsP, latsP)
+
+	thickness=ma.masked_where(thickness<0.01, thickness)
+
+	return thickness#xptsP, yptsP, thickness
+
+def get_ice_thickness(rawdatapath, startYear, forecastYear, month):
+    thickness = []
+    for year in range(startYear, forecastYear):
+        thickness.append(get_pmas_month(rawdatapath, year, month))
+    return thickness   
+    
+	
 def get_region_mask_sect(datapath, mplot, xypts_return=0):
 	datatype='uint8'
 	file_mask = datapath+'/OTHER/sect_fixed_n.msk'
