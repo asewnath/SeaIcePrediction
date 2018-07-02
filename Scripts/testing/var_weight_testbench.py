@@ -101,20 +101,30 @@ for index in range(yrsAvailable - minYrAdd + 1) :
         else:
             worksheet.write(row, col+4, extentForrAbs)
     
-    predVarForecast = np.array([predVarForecast, predVarForecast**2, predVarForecastMed, predVarForecastMed**2, predVarForecast*predVarForecastMed])
+    weightBool = 0        
+    _, unweightedPredVarTrain, predVarTrain, predVarTrainMed, predVarForecast, predVarForecastMed = ff.GetWeightedPredVar(derivedDataPath, yrsTrain, yrForecast, extentDetrendTrain, 
+                                                                                                                              varTrain, varForecast, forecastVar, forecastMonth, predMonth, startYr, numYrsRequired, 
+                                                                                                                              region, hemStr, iceType, normalize=0, outWeights=outWeights, weight=weightBool)            
+    
+    #predVarForecast = np.array([predVarForecast, predVarForecast**2, predVarForecastMed, predVarForecastMed**2, predVarForecast*predVarForecastMed])
+    forecastThickMean = np.ma.mean(ff.get_pmas_month(rawDataPath, yrForecast, forecastMonth))
+    
+    predVarForecast = np.array([predVarForecast, predVarForecast**2, predVarForecastMed, predVarForecastMed**2, predVarForecast*predVarForecastMed, forecastThickMean])
+    #predVarForecast = np.array([predVarForecast, predVarForecastMed, forecastThickMean])
     predVarForecast = np.reshape(predVarForecast, (1, -1))
     
     randForestPred = regr.predict(predVarForecast)[0]
+    #worksheet.write(row, col+5, randForestPred + extentTrendPersist)
+    worksheet.write(row, col+5, randForestPred)
     
-    worksheet.write(row, col+5, randForestPred + extentTrendPersist)
-    
-    
-    ridgePred = ridge.predict(predVarForecast)[0]
-    worksheet.write(row, col+6, ridgePred + extentTrendPersist)
+    #ridgePred = ridge.predict(predVarForecast)[0]
+    #worksheet.write(row, col+6, ridgePred + extentTrendPersist)
     
     mlpPred = mlp.predict(predVarForecast)[0]
-    worksheet.write(row, col+7, mlpPred + extentTrendPersist)
-   
+    #worksheet.write(row, col+7, mlpPred + extentTrendPersist)
+    worksheet.write(row, col+7, mlpPred)
+    
+    
     print (index)
     row += 1
     

@@ -33,14 +33,15 @@ predMonth = 9
 region = 0
 hemStr = 'N'
 anomObs = 1
-weight = 1
+weight = 0
 
 rawDataPath = '../../Data/' 
 derivedDataPath = '../../DataOutput/'
 
 yrForecast = 2015
 
-thickness = np.ma.mean(ff.get_pmas_month(rawDataPath, yrForecast, forecastMonth))
+#thickness = np.ma.mean(ff.get_pmas_month(rawDataPath, yrForecast, forecastMonth))
+thick, forecastThickMean = ff.get_ice_thickness(rawDataPath, startYr, yrForecast, forecastMonth)
 
 #Arctic Data
 yrsTrain, extentTrain = ff.get_ice_extentN(rawDataPath, predMonth, startYr, 
@@ -68,18 +69,19 @@ _, unweightedPredVarForecast, predVarTrainMean, predVarTrainMed, predVarForecast
                                                                                                                                  region, hemStr, iceType, normalize=0, outWeights=outWeights, weight=weight)
 
 
-
+thickMean = np.reshape(thick, (-1, 1))
 predVarTrainMean = np.reshape(predVarTrainMean, (-1, 1))
 predVarTrainMed = np.reshape(predVarTrainMed, (-1, 1))
 sqrMean = np.power(predVarTrainMean, 2)
 sqrMed = np.power(predVarTrainMed, 2)
 multFeat = np.multiply(predVarTrainMean, predVarTrainMed)
 
-predVarTrain = np.concatenate((predVarTrainMean, sqrMean, predVarTrainMed, sqrMed, multFeat), axis=1)
+predVarTrain = np.concatenate((predVarTrainMean, sqrMean, predVarTrainMed, sqrMed, multFeat, thickMean), axis=1)
+#predVarTrain = np.concatenate((predVarTrainMean, predVarTrainMed, thickMean), axis=1)
 
-predVarForecast = np.array([predVarForecastMean, predVarForecastMean**2, predVarForecastMed, predVarForecastMed**2, predVarForecastMean*predVarForecastMed])
+predVarForecast = np.array([predVarForecastMean, predVarForecastMean**2, predVarForecastMed, predVarForecastMed**2, predVarForecastMean*predVarForecastMed, forecastThickMean])
+#predVarForecast = np.array([predVarForecastMean, predVarForecastMed, forecastThickMean,])
 predVarForecast = np.reshape(predVarForecast, (1, -1))
-
 
 
 #do random forest regressor
@@ -90,9 +92,9 @@ score = 0
 
 #while final_val < 4.6 or score < 0.60:
 for i in range(10):
-    X_train, X_test, y_train, y_test = train_test_split(predVarTrain, extentDetrendTrain, test_size=0.3, random_state=None) #cross validation going on here
+    X_train, X_test, y_train, y_test = train_test_split(predVarTrain, extentDetrendTrain, test_size=0.1, random_state=None) #cross validation going on here
     
-    regr = RandomForestRegressor(verbose=0, n_estimators=30, bootstrap=False, criterion="mae", max_features=3,
+    regr = RandomForestRegressor(verbose=0, n_estimators=30, bootstrap=True, criterion="mse", max_features=2,
                                  max_depth=4, min_samples_split=8, min_samples_leaf=5,
                                  min_weight_fraction_leaf=0, max_leaf_nodes=4,
                                  min_impurity_decrease=0, oob_score=False, n_jobs=1,
@@ -111,8 +113,8 @@ for i in range(10):
     #ridgePred = ridge.predict(predVarForecast)
     
     
-    mlp = MLPRegressor(hidden_layer_sizes=(4,3), max_iter=800, alpha=0.01, batch_size='auto',
-                       early_stopping=False, activation='tanh')
+    mlp = MLPRegressor(hidden_layer_sizes=(300,200,200,200), max_iter=1000, alpha=0.00001, batch_size= 'auto',
+                       early_stopping=False, activation='relu')
     mlp.fit(X_train, y_train)
     print(mlp.score(X_test, y_test))
     mlpPred = mlp.predict(predVarForecast)

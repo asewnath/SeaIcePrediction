@@ -665,8 +665,8 @@ def get_pmas_month(rawdatapath, year, month=4):
 def get_ice_thickness(rawdatapath, startYear, forecastYear, month):
     thickness = []
     for year in range(startYear, forecastYear):
-        thickness.append(get_pmas_month(rawdatapath, year, month))
-    return thickness   
+        thickness.append(np.ma.mean(get_pmas_month(rawdatapath, year, month)))
+    return thickness, np.ma.mean(get_pmas_month(rawdatapath, forecastYear, month))   
     
 	
 def get_region_mask_sect(datapath, mplot, xypts_return=0):
