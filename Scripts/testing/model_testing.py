@@ -31,7 +31,7 @@ forecastMonth = 6
 outWeights = 1
 predMonth = 9
 region = 0
-hemStr = 'N'
+hemStr = 'S'
 anomObs = 1
 weight = 1
 
@@ -66,7 +66,7 @@ predVarTrain = np.reshape(predVarTrain, (-1, 1))
 sqrFeat = np.power(predVarTrain, 2)
 predVarTrain = np.concatenate((predVarTrain, sqrFeat), axis=1)
 
-predVarForecast = np.array([predVarForecast, predVarForecast**2])
+predVarForecast = np.array([predVarForecast, predVarForecast**2 ])
 predVarForecast = np.reshape(predVarForecast, (1, -1))
 
 #Antartica Data
@@ -102,7 +102,8 @@ extentTrendPersist = (lineTrain[-1]+(lineTrain[-1]-lineTrain[-2]))
 final_val = 0
 score = 0
 
-while final_val < 4.2 or score < 0.65:
+#while final_val < 4.2 or score < 0.8:
+for i in range(10):
     X_train, X_test, y_train, y_test = train_test_split(predVarTrain, extentDetrendTrain, test_size=0.4, random_state=None)
     
     regr = RandomForestRegressor(verbose=0, n_estimators=20, bootstrap=False, criterion="mse", max_features=2,
@@ -143,7 +144,7 @@ while final_val < 4.2 or score < 0.65:
     
     #extentForrAbs = extentDetrendForecast + extentTrendPersist
     
-    #print ('Observed extent: ',extentYr[-1])
+    print ('Observed extent: ',extentYr[0])
     #print ('Linear Regression Forecast extent: ',extentForrAbs)
     final_val = randForestPred[0] + extentTrendPersist
     print ('Random Forest Regression Forecast extent: ', final_val)
@@ -151,7 +152,7 @@ while final_val < 4.2 or score < 0.65:
     #print ('MLP Prediction: ', mlpPred[0] + extentTrendPersist)
     #print("\n")
     
-joblib.dump(regr, 'randForReg.pkl')
+#joblib.dump(regr, 'randForReg.pkl')
     #joblib.dump(ridge, 'ridgeReg.pkl')
     #joblib.dump(mlp, 'mlpReg.pkl')
 
