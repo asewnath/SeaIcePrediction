@@ -366,6 +366,22 @@ def GetWeightedPredVar(deriveddatapath, yearsTr, yearT, extentDTT, predvarYrsT, 
 	return rvalsDT, predvarYrDT, weightedPredvarMean, weightedPredvarMed, weightedPredvarYrMean, weightedPredvarYrMed
 
 
+def get_weighted_var(yearsTr, yearT, extentDTT, predvarYrsT, predvar_yrT, numYearsReq):
+    	
+
+    # Get detrended 2D forecast data
+    predvarYrsDT, predvarYrDT = get_detrended_yr(yearsTr, yearT, predvarYrsT, predvar_yrT, numYearsReq)
+
+	# Correlate detrended time series
+    rvalsDT = get_correlation_coeffs(predvarYrsDT, extentDTT, numYearsReq)        
+   
+    weightedVarTrain = []
+    for x in range(predvarYrsDT.shape[0]):
+        weightedVarTrain.append(rvalsDT*predvarYrsDT[x]) 
+    
+    return weightedVarTrain, rvalsDT*predvarYrDT    
+        
+
 def get_varDT(Years, Extent):
 	""" Detrend linear time series  """
 	trendT, interceptT, r_valsT, probT, stderrT = stats.linregress(Years,Extent)
@@ -668,48 +684,6 @@ def get_ice_thickness(rawdatapath, startYear, forecastYear, month):
         thickness.append(np.ma.mean(get_pmas_month(rawdatapath, year, month)))
     return thickness, np.ma.mean(get_pmas_month(rawdatapath, forecastYear, month))   
     
-	
-def get_region_mask_sect(datapath, mplot, xypts_return=0):
-	datatype='uint8'
-	file_mask = datapath+'/OTHER/sect_fixed_n.msk'
-	# 1   non-region oceans
-	# ;           = 2   Sea of Okhotsk and Japan
-	# ;           = 3   Bering Sea
-	# ;           = 4   Hudson Bay
-	# ;           = 5   Gulf of St. Lawrence
-	# ;           = 6   Baffin Bay/Davis Strait/Labrador Sea
-	# ;           = 7   Greenland Sea
-	# ;           = 8   Barents Seas
-	# ;           = 9   Kara
-	# ;           =10   Laptev
-	# ;           =11   E. Siberian
-	# ;           =12   Chukchi
-	# ;           =13   Beaufort
-	# ;           =14   Canadian Archipelago
-	# ;           =15   Arctic Ocean
-	# ;           =20   Land
-	# ;           =21   Coast
-	fd = open(file_mask, 'rb')
-	region_mask = fromfile(file=fd, dtype=datatype)
-	region_mask = reshape(region_mask, [448, 304])
-
-	#mask_latf = open('/Volumes/GRAID_NASA/NOAA/DATA/ICE_CONC/BOOTSTRAP/psn25lats_v3.dat', 'rb')
-	#mask_lonf = open('/Volumes/GRAID_NASA/NOAA/DATA/ICE_CONC/BOOTSTRAP/psn25lons_v3.dat', 'rb')
-	#lats_mask = reshape(fromfile(file=mask_latf, dtype='<i4')/100000., [448, 304])
-	#lons_mask = reshape(fromfile(file=mask_lonf, dtype='<i4')/100000., [448, 304])
-
-	#xpts, ypts = mplot(lons_mask, lats_mask)
-	if (xypts_return==1):
-		mask_latf = open(datapath+'/OTHER/psn25lats_v3.dat', 'rb')
-		mask_lonf = open(datapath+'/OTHER/psn25lons_v3.dat', 'rb')
-		lats_mask = reshape(fromfile(file=mask_latf, dtype='<i4')/100000., [448, 304])
-		lons_mask = reshape(fromfile(file=mask_lonf, dtype='<i4')/100000., [448, 304])
-
-		xpts, ypts = mplot(lons_mask, lats_mask)
-
-		return region_mask, xpts, ypts
-	else:
-		return region_mask
 
 
 def get_conc_gridded(dataoutpath, yearsT, month, hemStr, concVersion='v2'):
@@ -741,6 +715,51 @@ def get_conc_gridded(dataoutpath, yearsT, month, hemStr, concVersion='v2'):
 
 	return xpts, ypts, conc_years
 
+#def get_region_mask_sect(datapath, mplot, xypts_return=0):
+def get_region_mask_sect(datapath):
+	# Get NSIDC region masks
+	datatype='uint8'
+	file_mask = datapath+'/OTHER/sect_fixed_n.msk'
+	# 1   non-region oceans
+	# ;           = 2   Sea of Okhotsk and Japan
+	# ;           = 3   Bering Sea
+	# ;           = 4   Hudson Bay
+	# ;           = 5   Gulf of St. Lawrence
+	# ;           = 6   Baffin Bay/Davis Strait/Labrador Sea
+	# ;           = 7   Greenland Sea
+	# ;           = 8   Barents Seas
+	# ;           = 9   Kara
+	# ;           =10   Laptev
+	# ;           =11   E. Siberian
+	# ;           =12   Chukchi
+	# ;           =13   Beaufort
+	# ;           =14   Canadian Archipelago
+	# ;           =15   Arctic Ocean
+	# ;           =20   Land
+	# ;           =21   Coast
+	fd = open(file_mask, 'rb')
+	region_mask = fromfile(file=fd, dtype=datatype)
+	region_mask = reshape(region_mask, [448, 304])
+
+	#mask_latf = open('/Volumes/GRAID_NASA/NOAA/DATA/ICE_CONC/BOOTSTRAP/psn25lats_v3.dat', 'rb')
+	#mask_lonf = open('/Volumes/GRAID_NASA/NOAA/DATA/ICE_CONC/BOOTSTRAP/psn25lons_v3.dat', 'rb')
+	#lats_mask = reshape(fromfile(file=mask_latf, dtype='<i4')/100000., [448, 304])
+	#lons_mask = reshape(fromfile(file=mask_lonf, dtype='<i4')/100000., [448, 304])
+
+	#xpts, ypts = mplot(lons_mask, lats_mask)
+	'''
+	if (xypts_return==1):
+		mask_latf = open(datapath+'/OTHER/psn25lats_v3.dat', 'rb')
+		mask_lonf = open(datapath+'/OTHER/psn25lons_v3.dat', 'rb')
+		lats_mask = reshape(fromfile(file=mask_latf, dtype='<i4')/100000., [448, 304])
+		lons_mask = reshape(fromfile(file=mask_lonf, dtype='<i4')/100000., [448, 304])
+
+		xpts, ypts = mplot(lons_mask, lats_mask)
+
+		return region_mask, xpts, ypts
+	else:
+	'''    
+	return region_mask
 
 def get_meltonset_gridded(dataoutpath, yearsT, freezemelt_str, hemStr):
 	""" Get gridded melt onset data

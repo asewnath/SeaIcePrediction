@@ -33,12 +33,14 @@ predMonth = 9
 region = 0
 hemStr = 'N'
 anomObs = 1
-weight = 0
+weight = 1
 
 rawDataPath = '../../Data/' 
 derivedDataPath = '../../DataOutput/'
 
 yrForecast = 2015
+
+
 
 #thickness = np.ma.mean(ff.get_pmas_month(rawDataPath, yrForecast, forecastMonth))
 thick, forecastThickMean = ff.get_ice_thickness(rawDataPath, startYr, yrForecast, forecastMonth)

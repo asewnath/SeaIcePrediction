@@ -7,6 +7,7 @@ Created on Thu Jun 28 16:40:07 2018
 #FIX THE CORRELATION NAMES IF NEEDED BECAUSE IT'S CONFUSING
 #Detrended vs. Raw Ground Truth experimentation
 
+from numpy import linalg as LA
 import forecast_funcs as ff
 import statsmodels.api as sm
 import matplotlib.pyplot as plt
@@ -33,7 +34,7 @@ predMonth = 9
 region = 0
 hemStr = 'N'
 anomObs = 1
-weight = 0
+weight = 1
 
 rawDataPath = '../../Data/' 
 derivedDataPath = '../../DataOutput/'
@@ -55,7 +56,7 @@ varForecast = ff.get_gridvar(derivedDataPath, forecastVar, forecastMonth,
                              array(yrForecast), hemStr)
 years, extentYr = ff.get_ice_extentN(rawDataPath, predMonth, yrForecast, yrForecast, icetype=iceType, version=siiVersion, hemStr=hemStr)
 observed = extentYr[-1]
-_, unweightedPredVarForecast, predVarTrainMean, predVarTrainMed, predVarForecastMean, predVarForecastMed = ff.GetWeightedPredVar(derivedDataPath, yrsTrain, yrForecast, extentDetrendTrain, 
+_, unweightedPredVarForecast, predVarTrainMean, predVarTrainMed, predVarForecastMean, predVarForecastMed = ff.GetWeightedPredVar(derivedDataPath, yrsTrain, yrForecast, extentTrain, 
                                                                                                                                  varTrain, varForecast, forecastVar, forecastMonth, predMonth, startYr, numYrsRequired, 
                                                                                                                                  region, hemStr, iceType, normalize=0, outWeights=outWeights, weight=weight)
 
@@ -84,8 +85,10 @@ rawRandForrPred = []
 
 rawMLPCoDFilt = []
 
+randomState=2
+
 #Working with raw data
-X_train, X_test, y_train, y_test = train_test_split(predVarTrain, extentTrain, test_size=0.3, random_state=2)
+X_train, X_test, y_train, y_test = train_test_split(predVarTrain, extentTrain, test_size=0.3, random_state=randomState)
 
 for randomSeed in range(randSeedNum):
         '''    
@@ -95,7 +98,7 @@ for randomSeed in range(randSeedNum):
                                  min_impurity_decrease=0, oob_score=False, n_jobs=1,
                                  random_state=randomSeed)
         '''
-        regr = RandomForestRegressor()
+        regr = RandomForestRegressor(random_state=randomSeed)
         
         regr.fit(X_train, y_train)
         rawRandForrCorr.append(regr.score(X_test, y_test))
@@ -105,7 +108,7 @@ for randomSeed in range(randSeedNum):
         mlp = MLPRegressor(hidden_layer_sizes=(6,3), max_iter=800, alpha=0.001, batch_size= 'auto',
                        early_stopping=False, activation='relu', random_state=randomSeed)
         '''
-        mlp = MLPRegressor()
+        mlp = MLPRegressor(random_state=randomSeed,hidden_layer_sizes=(3,))
         
         mlp.fit(X_train, y_train)
         score = mlp.score(X_test, y_test)
@@ -119,7 +122,7 @@ for randomSeed in range(randSeedNum):
 
 
 #Working with detrended data
-X_train, X_test, y_train, y_test = train_test_split(predVarTrain, extentDetrendTrain, test_size=0.3, random_state=None)
+X_train, X_test, y_train, y_test = train_test_split(predVarTrain, extentDetrendTrain, test_size=0.3, random_state=randomState)
 
 for randomSeed in range(randSeedNum):
         
@@ -130,7 +133,7 @@ for randomSeed in range(randSeedNum):
                                  min_impurity_decrease=0, oob_score=False, n_jobs=1,
                                  random_state=randomSeed)
         '''
-        regr = RandomForestRegressor()
+        regr = RandomForestRegressor(random_state=randomSeed)
         
         regr.fit(X_train, y_train)
         detrendRandForrCorr.append(regr.score(X_test, y_test))
@@ -140,14 +143,22 @@ for randomSeed in range(randSeedNum):
         mlp = MLPRegressor(hidden_layer_sizes=(6,3), max_iter=800, alpha=0.001, batch_size= 'auto',
                        early_stopping=False, activation='relu', random_state=randomSeed)
         '''
-        mlp = MLPRegressor()
+        mlp = MLPRegressor(random_state=randomSeed, hidden_layer_sizes=(3,))
         
         mlp.fit(X_train, y_train)
         detrendMLPCorr.append(mlp.score(X_test, y_test))
         detrendMLPPred.append(mlp.predict(predVarForecast)[0] + extentTrendPersist)
         print(randomSeed)
 
-
+'''
+pltRange = np.arange(0, np.size(extentTrain))
+plt.scatter(pltRange, extentTrain)
+plt.ylabel('raw ground truth')
+plt.xlabel('Range')
+plt.title('MLP Raw CoD Filtered Scores')
+plt.savefig('mlp_raw_filtered.png')
+plt.close()
+'''
 #Create filtered CoD scatter plot for MLP
 '''        
 pltRange = np.arange(0, np.size(rawMLPCoDFilt))
@@ -158,7 +169,6 @@ plt.title('MLP Raw CoD Filtered Scores')
 plt.savefig('mlp_raw_filtered.png')
 plt.close()
 '''
-
 
 #Creating scatter plots of the data
 randSeedRange = np.arange(0, 50)
