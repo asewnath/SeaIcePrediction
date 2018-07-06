@@ -25,7 +25,7 @@ startYr = 1980
 numYrsRequired = 5
 minYrAdd = 6 
 yrsAvailable = 36
-iceType = 'extent'
+iceType = 'area'
 siiVersion ='v3.0'
 forecastVar = 'conc'
 forecastMonth = 6
@@ -56,7 +56,7 @@ varForecast = ff.get_gridvar(derivedDataPath, forecastVar, forecastMonth,
                              array(yrForecast), hemStr)
 years, extentYr = ff.get_ice_extentN(rawDataPath, predMonth, yrForecast, yrForecast, icetype=iceType, version=siiVersion, hemStr=hemStr)
 observed = extentYr[-1]
-_, unweightedPredVarForecast, predVarTrainMean, predVarTrainMed, predVarForecastMean, predVarForecastMed = ff.GetWeightedPredVar(derivedDataPath, yrsTrain, yrForecast, extentTrain, 
+_, unweightedPredVarForecast, predVarTrainMean, predVarTrainMed, predVarForecastMean, predVarForecastMed = ff.GetWeightedPredVar(derivedDataPath, yrsTrain, yrForecast, extentDetrendTrain, 
                                                                                                                                  varTrain, varForecast, forecastVar, forecastMonth, predMonth, startYr, numYrsRequired, 
                                                                                                                                  region, hemStr, iceType, normalize=0, outWeights=outWeights, weight=weight)
 
@@ -109,6 +109,7 @@ for randomSeed in range(randSeedNum):
                        early_stopping=False, activation='relu', random_state=randomSeed)
         '''
         mlp = MLPRegressor(random_state=randomSeed,hidden_layer_sizes=(3,))
+        #mlp = MLPRegressor(random_state=randomSeed)
         
         mlp.fit(X_train, y_train)
         score = mlp.score(X_test, y_test)
@@ -144,6 +145,7 @@ for randomSeed in range(randSeedNum):
                        early_stopping=False, activation='relu', random_state=randomSeed)
         '''
         mlp = MLPRegressor(random_state=randomSeed, hidden_layer_sizes=(3,))
+        #mlp = MLPRegressor(random_state=randomSeed)
         
         mlp.fit(X_train, y_train)
         detrendMLPCorr.append(mlp.score(X_test, y_test))
@@ -182,8 +184,8 @@ plt.close()
 plt.scatter(randSeedRange, rawRandForrCorr)
 plt.ylabel('CoD Scores')
 plt.xlabel('Random Seeds')
-plt.title('Random Forest Detrended CoD Scores vs. Random Seeds')
-plt.savefig('rand_forr_detrended_corr.png')
+plt.title('Random Forest Raw CoD Scores vs. Random Seeds')
+plt.savefig('rand_forr_raw_corr.png')
 plt.close()
 
 plt.scatter(randSeedRange, rawMLPCorr)
@@ -196,11 +198,12 @@ plt.close()
 plt.scatter(randSeedRange, detrendRandForrCorr)
 plt.ylabel('CoD Scores')
 plt.xlabel('Random Seeds')
-plt.title('Random Forest Raw CoD Scores vs. Random Seeds')
-plt.savefig('rand_forr_raw_corr.png')
+plt.title('Random Forest Detrended CoD Scores vs. Random Seeds')
+plt.savefig('rand_forr_detrended_corr.png')
 plt.close()
 
-plt.hlines(observed, 0, 50, label='4.62')
+
+plt.hlines(observed, 0, 50, label='3.42')
 plt.legend()
 plt.scatter(randSeedRange, detrendMLPPred, c='m')
 plt.ylabel('MLP Predictions')
@@ -209,7 +212,7 @@ plt.title('MLP Detrended Predictions for 2015 vs. Random Seeds')
 plt.savefig('mlp_detrended_pred.png')
 plt.close()
 
-plt.hlines(observed, 0, 50, label='4.62')
+plt.hlines(observed, 0, 50, label='3.42')
 plt.legend()
 plt.scatter(randSeedRange, detrendRandForrPred, c='m')
 plt.ylabel('Random Forest Predictions')
@@ -218,7 +221,7 @@ plt.title('Random Forest Detrended Predictions for 2015 vs. Random Seeds')
 plt.savefig('rand_for_detrended_pred.png')
 plt.close()
 
-plt.hlines(observed, 0, 50, label='4.62')
+plt.hlines(observed, 0, 50, label='3.42')
 plt.legend()
 plt.scatter(randSeedRange, rawRandForrPred, c='m')
 plt.ylabel('Random Forest Predictions')
@@ -227,7 +230,7 @@ plt.title('Random Forest Raw Predictions for 2015 vs. Random Seeds')
 plt.savefig('rand_for_raw_pred.png')
 plt.close()
 
-plt.hlines(observed, 0, 50, label='4.62')
+plt.hlines(observed, 0, 50, label='3.42')
 plt.legend()
 plt.scatter(randSeedRange, rawMLPPred, c='m')
 plt.ylabel('MLP Prediction')
