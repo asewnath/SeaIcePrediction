@@ -22,7 +22,8 @@ import pred_funcs as pfuncs
 
 m = Basemap(projection='npstere',boundinglat=65,lon_0=0, resolution='l'  )
 
-rawdatapath='../../../DATA/'
+#rawdatapath='../../../DATA/'
+rawdatapath='../../Data'
 pmasdatapath=rawdatapath+'/PIOMAS/heff_txt/'
 dataoutpath='./Data_output/PMAS_OUT/'
 meltoutpath='./Data_output/MELT_OUT/'

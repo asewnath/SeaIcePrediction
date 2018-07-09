@@ -67,9 +67,13 @@ def main(year, month, alg=0, poleStr='A', outputGrid=0):
 
 	m = Basemap(projection='npstere',boundinglat=65,lon_0=0, resolution='l'  )
 
-	datapath='/Users/aapetty/GitRepos/GitHub/SeaIcePrediction/Data/'
-	dataoutpath='/Users/aapetty/GitRepos/GitHub/SeaIcePrediction/DataOutput/IceConcA/'
-	figpath='/Users/aapetty/GitRepos/GitHub/SeaIcePrediction/Figures/Arctic/IceConc/'
+	#datapath='/Users/aapetty/GitRepos/GitHub/SeaIcePrediction/Data/'
+	#dataoutpath='/Users/aapetty/GitRepos/GitHub/SeaIcePrediction/DataOutput/IceConcA/'
+	#figpath='/Users/aapetty/GitRepos/GitHub/SeaIcePrediction/Figures/Arctic/IceConc/'
+    
+	datapath = '../../Data'
+	dataoutpath = '../../DataOutput/IceConcA/'
+	figpath = '../../Figures/Arctic/IceConc'
 
 	dx_res = 100000.
 	nx = int((m.xmax-m.xmin)/dx_res)+1; ny = int((m.ymax-m.ymin)/dx_res)+1
@@ -129,9 +133,9 @@ def main(year, month, alg=0, poleStr='A', outputGrid=0):
 startYear=1979
 endYear=2018
 
-startMonth=4 #3=April, 7=August
+startMonth=8 #3=April, 7=August
 
-endMonth=4
+endMonth=8
 #-- run main program
 if __name__ == '__main__':
 	for y in range(startYear, endYear+1, 1):
