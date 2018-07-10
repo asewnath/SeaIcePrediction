@@ -25,9 +25,9 @@ m = Basemap(projection='npstere',boundinglat=65,lon_0=0, resolution='l'  )
 #rawdatapath='../../../DATA/'
 rawdatapath='../../Data'
 pmasdatapath=rawdatapath+'/PIOMAS/heff_txt/'
-dataoutpath='./Data_output/PMAS_OUT/'
-meltoutpath='./Data_output/MELT_OUT/'
-figpath='./Figures/'
+#dataoutpath='./Data_output/PMAS_OUT/'
+#meltoutpath='./Data_output/MELT_OUT/'
+#figpath='./Figures/'
 
 grid_str='100km'
 
@@ -42,7 +42,7 @@ end_year=2015
 month=4 #June
 
 for year in xrange(start_year, end_year+1, 1):
-	print year
+	#print year
 	xptsP, yptsP, thickness=pfuncs.get_pmas_month(m, rawdatapath, year,month=month)
 
 	thickness_year = griddata((xptsP, yptsP),thickness, (xpts100, ypts100), method='linear')

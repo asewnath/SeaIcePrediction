@@ -133,9 +133,9 @@ def main(year, month, alg=0, poleStr='A', outputGrid=0):
 startYear=1979
 endYear=2018
 
-startMonth=8 #3=April, 7=August
+startMonth=9 #3=April, 7=August
 
-endMonth=8
+endMonth=11
 #-- run main program
 if __name__ == '__main__':
 	for y in range(startYear, endYear+1, 1):
