@@ -11,6 +11,7 @@ import forecast_funcs as ff
 import numpy as np
 from pylab import array
 
+
 def data_collection():
 
     rawDataPath = '../../Data/'
@@ -55,7 +56,7 @@ def data_collection():
                 regionData = iceConc.data
                 regionData[iceConc.mask == True] = 0 #get rid of nan
                 desiredRegion = regionMask == regInd
-                sample[regInd+2] = 100*np.ma.mean(np.multiply(regionData, desiredRegion))
+                sample[regInd+2] = np.ma.mean(np.multiply(regionData, desiredRegion))
                 #sample[regInd+1] = np.ma.mean(np.multiply(regionData, desiredRegion))
        
             feat.append(sample)

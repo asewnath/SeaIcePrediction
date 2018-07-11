@@ -17,9 +17,9 @@ mlpExtent = joblib.load('seq_model_2.pkl')
 #   Ground Truth: Sea Ice Extent for September
 
 numFeat = 18
-year    = 2016
+year    = 2015
 month   = 6
-fmonth  = 8
+fmonth  = 7
 
 iceType = 'extent'
 siiVersion ='v3.0'
@@ -52,7 +52,7 @@ gTruth = extent[0]
 
 #Ensemble Model run
 
-output = mlpConc.predict(feat) #THIS OUTPUT REPRESENTS SEA ICE FOR SEPTEMBER
+output = mlpConc.predict(feat) #THIS OUTPUT REPRESENTS SEA ICE FOR JULY
 debug = output
 
 #Testing out penalizing small features as inaccuracies
@@ -62,7 +62,7 @@ for i in range(np.size(output)):
         debug[0][i] = 0
 
 
-month=8
+month=month+1
 sample = np.zeros(numFeat)
 sample[0] = (month-1)
 sample[1] = np.ma.mean(ff.get_pmas_month(rawDataPath, year, month-1))
@@ -79,7 +79,7 @@ for regInd in range(16):
 
 
 #for m in range(month+1, fmonth+1): #we want to predict for september
-for m in range(7, fmonth+1):    
+for m in range(month+1, fmonth+1):    
     
     #Testing out penalizing small features as inaccuracies
     for i in range(np.size(output)):
@@ -87,13 +87,12 @@ for m in range(7, fmonth+1):
             output[0][i] = 0
        
     #output[:, 1:np.size(output)]=output[:, 1:np.size(output)]*100
-    m_arr = [m]
+    m_arr = [m-1]
     output = np.column_stack((m_arr, output))
     output = pcaConc.transform(output)
     output = mlpConc.predict(output)
  
     
-
 #Predict extent:
 output = np.column_stack((fmonth-1, output))
 #Testing out penalizing small features as inaccuracies
