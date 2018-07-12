@@ -42,7 +42,7 @@ for randomSeed in range(25):
     X_test = scaler.transform(X_test)
     
     #for n in range(1, 15):       
-    mlp = MLPRegressor(random_state=None, hidden_layer_sizes=(100,100,50,30), 
+    mlp = MLPRegressor(random_state=None, hidden_layer_sizes=(120,80,50,50,30), 
                        max_iter=500, activation='tanh', verbose = False,
                        solver='adam', alpha=0.0001, batch_size=1)
     mlp.fit(X_train, y_train)

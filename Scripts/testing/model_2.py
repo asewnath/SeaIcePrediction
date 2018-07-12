@@ -35,9 +35,9 @@ for randomSeed in range(25):
                                                 gTruth, test_size=0.2, 
                                                 random_state=None)
     
-    scaler.fit(X_train)
-    X_train = scaler.transform(X_train)
-    X_test = scaler.transform(X_test)
+    #scaler.fit(X_train)
+    #X_train = scaler.transform(X_train)
+    #X_test = scaler.transform(X_test)
     
     #for n in range(1, 15):
     '''
@@ -53,7 +53,7 @@ for randomSeed in range(25):
     
     if(mlp.score(X_test, y_test) >= 0.80):
         joblib.dump(mlp, 'seq_model_2.pkl', protocol=2)
-        joblib.dump(scaler, 'scaler_extent.pkl', protocol=2)
+        #joblib.dump(scaler, 'scaler_extent.pkl', protocol=2)
     
     scores.append(mlp.score(X_test, y_test))  
 

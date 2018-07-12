@@ -32,9 +32,9 @@ for randomSeed in range(25):
                                                 gTruth, test_size=0.2, 
                                                 random_state=None)
     #for n in range(1, 15):       
-    mlp = MLPRegressor(random_state=None, hidden_layer_sizes=(100,80,30,30,30), 
+    mlp = MLPRegressor(random_state=None, hidden_layer_sizes=(120,80,50,50,30), 
                        max_iter=500, activation='tanh', verbose = False,
-                       solver='adam', alpha=0.0001, batch_size=1)
+                       solver='adam', alpha=0.0005, batch_size=1)
     mlp.fit(X_train, y_train)
     print(randomSeed)
     if(mlp.score(X_test, y_test) >= 0.90):

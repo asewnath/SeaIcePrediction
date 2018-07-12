@@ -93,7 +93,7 @@ for i in range(np.size(output)):
     if (output[0][i] < 0.09):
         output[0][i] = 0
 '''
-output = scaleExtent.transform(output)
+#output = scaleExtent.transform(output)
 final  = mlpExtent.predict(output)[0]
 
 

@@ -22,9 +22,9 @@ def data_collection():
     siiVersion ='v3.0'
     
     startYr    = 1990
-    forecastYr = 2014
-    startMonth = 6 
-    stopMonth  = 9 
+    forecastYr = 2010
+    startMonth = 2 
+    stopMonth  = 11 
     regionMask = np.load(derivedDataPath + 'Regions/regionMaskA100km')
     
     numFeat = 18

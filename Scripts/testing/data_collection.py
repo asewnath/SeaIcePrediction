@@ -95,11 +95,11 @@ def mat_preprocess():
 #This will come later... (hopefully not)
 
 #def lstm_preprocessing():
-#feat, _ = data_collection() #get data
+feat, _ = data_collection() #get data
 
 #Create time series input vectors and ground truth
-#groundTruth = []
-#for index in range(np.size(feat,0)):
+groundTruth = []
+for index in range(np.size(feat,0)):
     
 
 
