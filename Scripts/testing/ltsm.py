@@ -26,7 +26,7 @@ def lstm_model(num_units, rnn_layers, dense_layers=None, learning_rate=0.1, opti
     :param num_units: the size of the cells.
     :param rnn_layers: list of int or dict
                          * list of int: the steps used to instantiate the `BasicLSTMCell` cell
-                         ^That is so stupid and ambiguous
+                         ^That is so stupid and ambiguous, you don't completely know what's going on.
                          * list of dict: [{steps: int, keep_prob: int}, ...]
     :param dense_layers: list of nodes for each layer
     :return: the model definition
