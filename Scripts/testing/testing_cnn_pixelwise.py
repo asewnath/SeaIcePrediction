@@ -99,12 +99,10 @@ def main(unused_argv):
             #make resolution a hyperparameter
             data = np.reshape(data, (3249, numChannels, imageSize, imageSize)) #don't hardcode this number.
             labels = np.reshape(labels, (3249, 1))
-        
             data = np.float32(data)
         
-            if(year != startYear and month != 0):
+            if((year != startYear) and (month != 0)):
                 ws = tf.estimator.WarmStartSettings(ckpt_to_initialize_from="./cnn")
-            # Create the Estimator
                 classifier = tf.estimator.Estimator(
                         model_fn=cnn_model_fn, model_dir="./cnn",
                         warm_start_from=ws)

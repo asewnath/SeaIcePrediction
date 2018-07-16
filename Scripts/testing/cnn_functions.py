@@ -123,11 +123,11 @@ def shuffle_input(data, groundTruth):
     
     return data, groundTruth
 
-data, groundTruth = create_input(8, 1995, 6,  11)
-data, labels = shuffle_input(data, groundTruth)
+data, groundTruth = create_input(0, 1985, 5,  11)
+#data, labels = shuffle_input(data, groundTruth)
 
 #new_data = np.reshape(data, (3249, 5, 5, 4))
-data = np.reshape(data, (3249, 7, 11, 11))
+#data = np.reshape(data, (3249, 7, 11, 11))
 
 
 
