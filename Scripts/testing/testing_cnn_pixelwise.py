@@ -6,7 +6,7 @@ from cnn_functions import create_input
 from cnn_functions import shuffle_input
 
 #Control Panel:
-startYear = 1980
+startYear = 1985
 stopYear  = 2012
 #month = 6
 #year  = 1995
@@ -105,9 +105,12 @@ def main(unused_argv):
             if(year != startYear and month != 0):
                 ws = tf.estimator.WarmStartSettings(ckpt_to_initialize_from="./cnn")
             # Create the Estimator
-            classifier = tf.estimator.Estimator(
-                    model_fn=cnn_model_fn, model_dir="./cnn",
-                    warm_start_from=ws)
+                classifier = tf.estimator.Estimator(
+                        model_fn=cnn_model_fn, model_dir="./cnn",
+                        warm_start_from=ws)
+            else:
+                classifier = tf.estimator.Estimator(
+                        model_fn=cnn_model_fn, model_dir="./cnn")               
             
             train_input_fn = tf.estimator.inputs.numpy_input_fn(
                     x={"x": data},
