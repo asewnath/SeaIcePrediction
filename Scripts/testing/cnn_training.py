@@ -26,6 +26,7 @@ num_hidden   = 5;
 graph = tf.Graph()
 
 with graph.as_default():
+    
     tf_train_data = tf.placeholder(
             tf.float32, shape = (batch_size, image_size, image_size, num_channels))
     tf_train_labels = tf.placeholder(tf.float32, shape=(1,1))

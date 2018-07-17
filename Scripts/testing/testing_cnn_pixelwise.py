@@ -16,6 +16,8 @@ batchSize = 50
 
 tf.logging.set_verbosity(tf.logging.INFO)
 
+'''RUNNING INTO WARM START ISSUES'''
+
 def cnn_model_fn(features, labels, mode):
     
     # Input Layer
@@ -58,6 +60,10 @@ def cnn_model_fn(features, labels, mode):
     # Regression Layer
     regPredictions = tf.layers.dense(inputs=dropout, units=1)
     
+    
+    init_op = tf.global_variables_initializer()
+    saver = tf.train.Saver()
+    
     if mode == tf.estimator.ModeKeys.PREDICT:
         return tf.estimator.EstimatorSpec(mode=mode, predictions=regPredictions)
     
@@ -80,7 +86,6 @@ def main(unused_argv):
             data, groundTruth, size = create_input(month, year, numForecast, imageSize, resolution)
             data, labels = shuffle_input(data, groundTruth)
         
-            #make resolution a hyperparameter
             data = np.reshape(data, (size, numChannels, imageSize, imageSize))
             labels = np.reshape(labels, (size, 1))
             data = np.float32(data)
@@ -105,8 +110,9 @@ def main(unused_argv):
                     steps=size//batchSize)
 
 
-if __name__ == "__main__":
-    tf.app.run()
+if __name__ == "__main__":   
+   tf.app.run()
+
 
   
     

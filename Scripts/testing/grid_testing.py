@@ -8,8 +8,8 @@ from scipy.interpolate import griddata
 from netCDF4 import Dataset
 
 poleStr='A'# 'A: Arctic, AA: Antarctic
-month=2 # 5=June, 0=January
-year=2016
+month=7 # 5=June, 0=January
+year=1990
 alg=0 #0=Nasa team
 
 # File paths
@@ -21,7 +21,7 @@ figpath='../../Figures/Arctic/IceConc/'
 # Get map projection and create regularly spaced grid from this projection
 m = Basemap(projection='npstere',boundinglat=65,lon_0=0, resolution='l')
 
-dx_res = 25000. # 100 km
+dx_res = 100000. # 100 km
 nx = int((m.xmax-m.xmin)/dx_res)+1; ny = int((m.ymax-m.ymin)/dx_res)+1
 grid_str=str(int(dx_res/1000))+'km'
 lonsG, latsG, xptsG, yptsG = m.makegrid(nx, ny, returnxy=True)
@@ -46,6 +46,7 @@ ice_conc = ice_conc.filled(0)
 ice_conc = where((ice_flag >=1.5), 0, ice_conc)
 
 # Note the pole hole due to the incomplete satellite orbit
+
 if (year<1987):
     pmask=84.
 elif((year==1987)&(month<=5)):

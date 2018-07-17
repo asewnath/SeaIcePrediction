@@ -9,6 +9,8 @@ from mpl_toolkits.basemap import Basemap
 from scipy.interpolate import griddata
 from netCDF4 import Dataset
 
+import keras
+
 #month=2 # 5=June, 0=January
 
 def retrieve_grid(month, year, resolution):
@@ -36,7 +38,7 @@ def retrieve_grid(month, year, resolution):
     if (year>2015):
         ice_conc = ff.get_month_concSN_NRT(datapath, year, month, alg=alg, pole=poleStr, monthMean=1)
         # Mask values below 0.15
-        ice_conc=ma.masked_where(ice_conc<=0.15, ice_conc)
+        ice_conc=ma.masked_where(ice_conc<=0.15, ice_conc) #I don't get this...
     else:
         ice_conc = ff.get_month_concSN(datapath, year, month, alg=alg, pole=poleStr)
     
@@ -59,10 +61,12 @@ def retrieve_grid(month, year, resolution):
     # Grid data
     ice_concG = griddata((xpts.flatten(), ypts.flatten()),ice_conc.flatten(), (xptsG, yptsG), method='linear')
     ice_conc_ma=ma.masked_where(np.isnan(ice_concG), ice_concG)
-    ice_conc_ma=ma.masked_where((latsG>pmask), ice_conc_ma)
+    #ice_conc_ma=ma.masked_where((latsG>pmask), ice_conc_ma)
     
+    test = np.where(latsG>pmask)
     gridData = ice_conc_ma.data
     gridData[ice_conc_ma.mask == True] = 0
+    gridData[test] = 1
     
     return gridData
     
@@ -123,19 +127,160 @@ def shuffle_input(data, groundTruth):
     Random(seed).shuffle(groundTruth)
     return data, groundTruth
 
-data, groundTruth, size = create_input(0, 1985, 5,  11, 100)
-#data, labels = shuffle_input(data, groundTruth)
 
-#new_data = np.reshape(data, (3249, 5, 5, 4))
-#data = np.reshape(data, (3249, 7, 11, 11))
+def get_month_str(month):
+    
+    if(month==0):
+        monthStr = 'January'
+    elif(month==1):
+        monthStr = 'February'
+    elif(month==2):
+        monthStr = 'March'        
+    elif(month==3):
+        monthStr = 'April'         
+    elif(month==4):
+        monthStr = 'May'
+    elif(month==5):
+        monthStr = 'June'
+    elif(month==6):
+        monthStr = 'July'
+    elif(month==7):
+        monthStr = 'August'
+    elif(month==8):
+        monthStr = 'September'   
+    elif(month==9):
+        monthStr = 'October'
+    elif(month==10):
+        monthStr = 'November'
+    elif(month==11):
+        monthStr = 'December' 
+        
+    return monthStr      
+    
+
+def create_input_with_predictions(predList, month, year, numForecast, imDim, resolution):
+    
+    padding = int(np.floor(imDim/2))
+    data = retrieve_grid(month, year, resolution)
+    dim = np.size(data,0)
+    vertZeros = np.zeros((padding, dim))
+    hortZeros = np.zeros((dim+(2*padding), padding))
+    
+    mat = []
+    matYear = year
+    monthMod = month
+    numForMod = numForecast
+    #Pad the predictions:
+    for index in range(np.size(predList, 0)):
+        grid = predList[index]
+        #Create zero padding manually
+        grid = np.vstack((vertZeros, grid))
+        grid = np.vstack((grid, vertZeros))
+        grid = np.hstack((hortZeros, grid))
+        grid = np.hstack((grid, hortZeros))
+        monthMod = monthMod - 1
+        numForMod = numForMod - 1
+        mat.append(grid)        
+    
+    for index in range(numForMod+1):
+        if(monthMod-index < 0):
+            matYear = matYear - 1
+            grid = retrieve_grid(11, matYear, resolution)
+        else:    
+            grid = retrieve_grid(month-index, matYear, resolution)
+        #Create zero padding manually
+        grid = np.vstack((vertZeros, grid))
+        grid = np.vstack((grid, vertZeros))
+        grid = np.hstack((hortZeros, grid))
+        grid = np.hstack((grid, hortZeros)) 
+        mat.append(grid)
+        
+    mat = np.reshape(mat, (numForecast+1,np.size(mat[0],0),np.size(mat[0],0)))
+
+    #Get ground truth data.. (account for January transition)
+    if(month == 11):
+        gtGrid = retrieve_grid(0, year+1, resolution)
+    else:    
+        gtGrid = retrieve_grid(month+1, year, resolution)
+    
+    #Retrieve grid dimensions
+    matRows = np.size(mat[0],0)
+    matCols = np.size(mat[0],1)
+
+    inputs = []
+    gt = []
+    #Create sliding window to extract volumes and add them to list
+    for row in range(matRows-(2*padding)):
+        for col in range(matCols-(2*padding)):
+            inputs.append(mat[0:numForecast+1, row:row+imDim, col:col+imDim])
+            gt.append(gtGrid[row, col])
+        
+    size = np.size(inputs,0)    
+        
+    return inputs, gt, size   
+
+
+
+def graph_pred_truth(predictions, forMonth, year, resolution):
+
+    #Graph predictions
+    m = Basemap(projection='npstere',boundinglat=65,lon_0=0, resolution='l')
+    
+    dx_res = resolution * 1000
+    nx = int((m.xmax-m.xmin)/dx_res)+1; ny = int((m.ymax-m.ymin)/dx_res)+1
+    #grid_str=str(int(dx_res/1000))+'km'
+    lonsG, latsG, xptsG, yptsG = m.makegrid(nx, ny, returnxy=True)
+    
+    # Get lon/lats pf the ice concentration data on polar sterographic grid
+    datapath = '../../Data/'
+    lats, lons = ff.get_psnlatslons(datapath)
+    xpts, ypts =m(lons, lats)
+    
+    monthStr = get_month_str(forMonth)
+    yearStr = str(year)
+    
+    fig_title = 'Comparison for ' + monthStr + ' ' + yearStr
+    fig = figure(figsize=(6,6))
+    fig.suptitle(fig_title, fontsize=18)
+    
+    ax = fig.add_subplot(221)
+    ax.set_title('Predictions for ' + monthStr + ' ' + yearStr)
+    im1 = m.pcolormesh(xptsG , yptsG, predictions, cmap=cm.Blues_r, vmin=0, vmax=1,shading='flat', zorder=2)
+    
+    truthGrid = retrieve_grid(forMonth, year, resolution)
+    ax = fig.add_subplot(223)
+    ax.set_title('Truth for ' + monthStr + ' ' + yearStr)
+    im2 = m.pcolormesh(xptsG , yptsG, truthGrid, cmap=cm.Blues_r, vmin=0, vmax=1,shading='flat', zorder=2)
+    
+    #Calculate ice extent and ice areas
+    areaStr   = "Ice Area: \n\nIce Extent: "
+    
+    ax = fig.add_subplot(222)
+    ax.axis('off')
+    ax.text(0.05, 0.95, areaStr,  fontsize=12,
+            verticalalignment='top')
+    
+    ax = fig.add_subplot(224)
+    ax.axis('off')
+    ax.text(0.05, 0.95, areaStr,  fontsize=12,
+            verticalalignment='top')
+    
+    plt.show()
 
 
 
 
+'''
+data, groundTruth, size = create_input(6, 1990, 6,  15, 100) #6=July
+data   = np.float32(data)
+model = keras.models.load_model('my_model.h5')
+predictions = model.predict(data) #Predicts for August
 
+#reconstruct predictions into grid to be displayed
+predictions = np.reshape(predictions, (57, 57))
 
-
-
+#graph_pred_truth(predictions, 7, 1990, 100)
+'''
 
 
 
