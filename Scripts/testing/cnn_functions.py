@@ -11,7 +11,7 @@ from netCDF4 import Dataset
 
 #month=2 # 5=June, 0=January
 
-def retrieve_grid(month, year):
+def retrieve_grid(month, year, resolution):
     
     poleStr='A'# 'A: Arctic, AA: Antarctic
     alg=0 #0=Nasa team
@@ -22,7 +22,7 @@ def retrieve_grid(month, year):
     # Get map projection and create regularly spaced grid from this projection
     m = Basemap(projection='npstere',boundinglat=65,lon_0=0, resolution='l')
     
-    dx_res = 100000. # 100 km
+    dx_res = resolution * 1000
     nx = int((m.xmax-m.xmin)/dx_res)+1; ny = int((m.ymax-m.ymin)/dx_res)+1
     lonsG, latsG, xptsG, yptsG = m.makegrid(nx, ny, returnxy=True)  
     
@@ -67,10 +67,10 @@ def retrieve_grid(month, year):
     return gridData
     
 
-def create_input(month, year, numForecast, imDim):
+def create_input(month, year, numForecast, imDim, resolution):
    
     padding = int(np.floor(imDim/2))
-    data = retrieve_grid(month, year)
+    data = retrieve_grid(month, year, resolution)
     dim = np.size(data,0)
     vertZeros = np.zeros((padding, dim))
     hortZeros = np.zeros((dim+(2*padding), padding))
@@ -80,9 +80,9 @@ def create_input(month, year, numForecast, imDim):
     for index in range(numForecast+1):
         if(month-index < 0):
             matYear = matYear - 1
-            grid = retrieve_grid(11, matYear)
+            grid = retrieve_grid(11, matYear, resolution)
         else:    
-            grid = retrieve_grid(month-index, matYear)
+            grid = retrieve_grid(month-index, matYear, resolution)
         #Create zero padding manually
         grid = np.vstack((vertZeros, grid))
         grid = np.vstack((grid, vertZeros))
@@ -94,9 +94,9 @@ def create_input(month, year, numForecast, imDim):
 
     #Get ground truth data.. (account for January transition)
     if(month == 11):
-        gtGrid = retrieve_grid(0, year+1)
+        gtGrid = retrieve_grid(0, year+1, resolution)
     else:    
-        gtGrid = retrieve_grid(month+1, year)
+        gtGrid = retrieve_grid(month+1, year, resolution)
     
     #Retrieve grid dimensions
     matRows = np.size(mat[0],0)
@@ -110,20 +110,20 @@ def create_input(month, year, numForecast, imDim):
             inputs.append(mat[0:numForecast+1, row:row+imDim, col:col+imDim])
             gt.append(gtGrid[row, col])
         
-    return inputs,gt    
+    size = np.size(inputs,0)    
+        
+    return inputs,gt,size    
 
 
 def shuffle_input(data, groundTruth): 
     
     #Get random integer
-    #seed = np.random.randint(0, 999999)
-    seed = 999    
+    seed = np.random.randint(0, 999999) 
     Random(seed).shuffle(data)
     Random(seed).shuffle(groundTruth)
-    
     return data, groundTruth
 
-data, groundTruth = create_input(0, 1985, 5,  11)
+data, groundTruth, size = create_input(0, 1985, 5,  11, 100)
 #data, labels = shuffle_input(data, groundTruth)
 
 #new_data = np.reshape(data, (3249, 5, 5, 4))
