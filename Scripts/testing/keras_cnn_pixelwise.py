@@ -13,9 +13,11 @@ stopYear  = 2012
 #May want to increase the imageSize to allow for more layers
 imageSize = 21
 numForecast = 6
-numChannels = numForecast+1
+numChannels = numForecast+2 #accounting for the region mask
 resolution = 50
 batchSize = 400
+regBool = 1
+
 
 
 def create_model():
@@ -54,6 +56,8 @@ def create_model():
 checkpoint_path = "cnn/cp.ckpt"
 checkpoint_dir = os.path.dirname(checkpoint_path)
 
+
+
 months = np.arange(0,12)
 for year in range(startYear, stopYear+1):
     #make a randomized list of months and train with that every year to avoid cyclical training behavior
@@ -61,7 +65,7 @@ for year in range(startYear, stopYear+1):
     
     for index in range(0, 12):
 
-        data, groundTruth, size = create_input(months[index], year, numForecast, imageSize, resolution)
+        data, groundTruth, size = create_input(months[index], year, numForecast, imageSize, resolution, regBool)
         data, labels = shuffle_input(data, groundTruth)
                 
         data   = np.reshape(data, (size, numChannels, imageSize, imageSize))

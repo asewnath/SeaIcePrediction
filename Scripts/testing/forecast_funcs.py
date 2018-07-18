@@ -715,8 +715,8 @@ def get_conc_gridded(dataoutpath, yearsT, month, hemStr, concVersion='v2'):
 
 	return xpts, ypts, conc_years
 
-#def get_region_mask_sect(datapath, mplot, xypts_return=0):
-def get_region_mask_sect(datapath):
+def get_region_mask_sect(datapath, mplot, xypts_return=0):
+#def get_region_mask_sect(datapath):
 	# Get NSIDC region masks
 	datatype='uint8'
 	file_mask = datapath+'/OTHER/sect_fixed_n.msk'
@@ -747,7 +747,7 @@ def get_region_mask_sect(datapath):
 	#lons_mask = reshape(fromfile(file=mask_lonf, dtype='<i4')/100000., [448, 304])
 
 	#xpts, ypts = mplot(lons_mask, lats_mask)
-	'''
+	
 	if (xypts_return==1):
 		mask_latf = open(datapath+'/OTHER/psn25lats_v3.dat', 'rb')
 		mask_lonf = open(datapath+'/OTHER/psn25lons_v3.dat', 'rb')
@@ -758,8 +758,7 @@ def get_region_mask_sect(datapath):
 
 		return region_mask, xpts, ypts
 	else:
-	'''    
-	return region_mask
+		return region_mask
 
 def get_meltonset_gridded(dataoutpath, yearsT, freezemelt_str, hemStr):
 	""" Get gridded melt onset data

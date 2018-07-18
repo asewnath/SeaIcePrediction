@@ -70,9 +70,9 @@ def retrieve_grid(month, year, resolution):
     
     return gridData
     
-
-def create_input(month, year, numForecast, imDim, resolution):
-   
+def create_input(month, year, numForecast, imDim, resolution, regBool):
+   #Clear up the number of channels thing 
+    
     padding = int(np.floor(imDim/2))
     data = retrieve_grid(month, year, resolution)
     dim = np.size(data,0)
@@ -93,8 +93,19 @@ def create_input(month, year, numForecast, imDim, resolution):
         grid = np.hstack((hortZeros, grid))
         grid = np.hstack((grid, hortZeros)) 
         mat.append(grid)
-        
-    mat = np.reshape(mat, (numForecast+1,np.size(mat[0],0),np.size(mat[0],0)))
+    
+    if(regBool == 1):
+        regionMask = grid_region_mask(resolution)
+        regionMask = np.vstack((vertZeros, regionMask))
+        regionMask = np.vstack((regionMask, vertZeros))
+        regionMask = np.hstack((hortZeros, regionMask))
+        regionMask = np.hstack((regionMask, hortZeros)) 
+        mat.append(regionMask)
+        numChannels = numForecast+1
+        mat = np.reshape(mat, (numChannels+1,np.size(mat[0],0),np.size(mat[0],0)))
+    else:
+        numChannels = numForecast   
+        mat = np.reshape(mat, (numChannels+1,np.size(mat[0],0),np.size(mat[0],0)))
 
     #Get ground truth data.. (account for January transition)
     if(month == 11):
@@ -111,12 +122,13 @@ def create_input(month, year, numForecast, imDim, resolution):
     #Create sliding window to extract volumes and add them to list
     for row in range(matRows-(2*padding)):
         for col in range(matCols-(2*padding)):
-            inputs.append(mat[0:numForecast+1, row:row+imDim, col:col+imDim])
+            inputs.append(mat[0:numChannels+1, row:row+imDim, col:col+imDim])
             gt.append(gtGrid[row, col])
         
     size = np.size(inputs,0)    
-        
+    
     return inputs,gt,size    
+
 
 
 def shuffle_input(data, groundTruth): 
@@ -268,6 +280,25 @@ def graph_pred_truth(predictions, forMonth, year, resolution):
     plt.show()
 
 
+def grid_region_mask(resolution):
+    
+    dataPath = '../../Data/'
+    
+    # BASEMAP INSTANCE
+    m = Basemap(projection='npstere',boundinglat=65,lon_0=0, resolution='l'  )
+    dx_res = resolution*1000 #100000.
+    nx = int((m.xmax-m.xmin)/dx_res)+1; ny = int((m.ymax-m.ymin)/dx_res)+1
+    lonsG, latsG, xptsG, yptsG = m.makegrid(nx, ny, returnxy=True)
+    
+    
+    region_mask, xpts, ypts = ff.get_region_mask_sect(dataPath, m, xypts_return=1)
+    region_mask=ma.masked_where(region_mask==1.5, region_mask)
+    region_mask=ma.masked_where(region_mask>19.5, region_mask)
+    
+    region_maskG = griddata((xpts.flatten(), ypts.flatten()),region_mask.flatten(), (xptsG, yptsG), method='nearest')
+    return region_maskG.data
+
+
 
 
 '''
@@ -282,8 +313,8 @@ predictions = np.reshape(predictions, (57, 57))
 #graph_pred_truth(predictions, 7, 1990, 100)
 '''
 
-
-
+#regionMask = grid_regionmask(100)
+grid = create_input(6, 1995, 3, 11, 100, 1)
 
 
 
