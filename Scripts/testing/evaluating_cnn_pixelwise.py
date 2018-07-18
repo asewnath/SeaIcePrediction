@@ -8,12 +8,12 @@ from cnn_functions import create_input_with_predictions
 from cnn_functions import graph_pred_truth
 
 #MAKE SURE THAT THESE MATCH THE PARAMETERS IN TRAINING
-imageSize = 15
+imageSize = 17
 numForecast = 6
 resolution = 100
 
 #Load model for evaluation
-model = keras.models.load_model('my_model.h5')
+model = keras.models.load_model('my_model71718.h5')
 
 #Get test data to retrieve predictions for month+1
 year  = 2013

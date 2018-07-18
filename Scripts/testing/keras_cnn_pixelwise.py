@@ -11,8 +11,8 @@ import os
 startYear = 1985
 stopYear  = 2012
 #May want to increase the imageSize to allow for more layers
-imageSize = 17
-numForecast = 8
+imageSize = 21
+numForecast = 6
 numChannels = numForecast+1
 resolution = 50
 batchSize = 400
@@ -26,26 +26,26 @@ def create_model():
     model = keras.models.Sequential()
     model.add(keras.layers.Conv2D(64, kernel_size=(5, 5), strides=(1, 1),
                      activation='relu', data_format="channels_first",
-                     padding='same',
+                     padding='valid',
                      input_shape=(numChannels, imageSize, imageSize)))
     model.add(keras.layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2),
-                                        data_format="channels_first"))
-    model.add(keras.layers.Conv2D(64, (5, 5), activation='relu', padding='same', #(3,3)
+                                        data_format="channels_first", padding='valid'))
+    model.add(keras.layers.Conv2D(64, (5, 5), activation='relu', padding='valid', #(3,3)
                                   data_format="channels_first"))
     model.add(keras.layers.MaxPooling2D(pool_size=(2, 2), padding='valid',
                                         data_format="channels_first"))
-    model.add(keras.layers.Conv2D(32, (3, 3), activation='relu',
+    model.add(keras.layers.Conv2D(32, (2, 2), activation='relu',
                                   data_format="channels_first"))
     model.add(keras.layers.MaxPooling2D(pool_size=(2, 2), padding='same',
                                         data_format="channels_first"))
     model.add(keras.layers.Flatten())
     model.add(keras.layers.Dense(40, activation='relu'))
     model.add(keras.layers.Dropout(0.3))
-    model.add(keras.layers.Dense(1, activation='relu'))
+    model.add(keras.layers.Dense(1, activation='linear'))
     
     # Configure a model for mean-squared error regression.
-    model.compile(optimizer=keras.optimizers.Adam(0.001),
-                  loss='mae',      
+    model.compile(optimizer=keras.optimizers.Adadelta(0.001),
+                  loss='logcosh',      
                   metrics=['mae'])  # mean absolute error
   
     return model
@@ -77,14 +77,14 @@ for year in range(startYear, stopYear+1):
             model = create_model()
             model.summary()
         else:
-            model = keras.models.load_model('my_model71718.h5')
+            model = keras.models.load_model('my_modeltest.h5')
         
         print("Year:" + str(year) + ",  Month:" + str(months[index]))
         #increase batch size to 200
         model.fit(data, labels, batch_size=batchSize, verbose=2,
                   steps_per_epoch=None, epochs=1)
 
-        model.save('my_model71718.h5')
+        model.save('my_modeltest.h5')
 
 
 
