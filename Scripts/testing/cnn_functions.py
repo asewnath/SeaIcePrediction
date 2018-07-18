@@ -81,18 +81,25 @@ def create_input(month, year, numForecast, imDim, resolution, regBool):
     
     mat = []
     matYear = year
+    monthMod = month
+    subVal = 0
     for index in range(numForecast+1):
-        if(month-index < 0):
+        
+        if(monthMod-subVal < 0):
+            monthMod = 11
             matYear = matYear - 1
-            grid = retrieve_grid(11, matYear, resolution)
+            grid = retrieve_grid(monthMod, matYear, resolution)
+            subVal = 0 #reset value to subtract
         else:    
-            grid = retrieve_grid(month-index, matYear, resolution)
+            grid = retrieve_grid(monthMod-subVal, matYear, resolution)
         #Create zero padding manually
         grid = np.vstack((vertZeros, grid))
         grid = np.vstack((grid, vertZeros))
         grid = np.hstack((hortZeros, grid))
         grid = np.hstack((grid, hortZeros)) 
         mat.append(grid)
+        subVal = subVal+1
+        
     
     if(regBool == 1):
         regionMask = grid_region_mask(resolution)
@@ -197,7 +204,7 @@ def create_input_with_predictions(predList, month, year, numForecast, imDim, res
     for index in range(numForMod+1):
         if(monthMod-index < 0):
             matYear = matYear - 1
-            grid = retrieve_grid(11, matYear, resolution)
+            grid = retrieve_grid(11, matYear, resolution) #FIX
         else:    
             grid = retrieve_grid(month-index, matYear, resolution)
         #Create zero padding manually
@@ -333,18 +340,24 @@ def create_input_thickness(month, year, numForecast, imDim, resolution, regBool)
     
     mat = []
     matYear = year
+    monthMod = month
+    subVal = 0
     for index in range(numForecast+1):
-        if(month-index < 0):
+        
+        if(monthMod-subVal < 0):
+            monthMod = 11
             matYear = matYear - 1
-            grid = retrieve_grid(11, matYear, resolution)
+            grid = retrieve_grid(monthMod, matYear, resolution)
+            subVal = 0 #reset value to subtract
         else:    
-            grid = retrieve_grid(month-index, matYear, resolution)
+            grid = retrieve_grid(monthMod-subVal, matYear, resolution)
         #Create zero padding manually
         grid = np.vstack((vertZeros, grid))
         grid = np.vstack((grid, vertZeros))
         grid = np.hstack((hortZeros, grid))
         grid = np.hstack((grid, hortZeros)) 
         mat.append(grid)
+        subVal = subVal+1
     
     if(regBool == 1):
         regionMask = grid_region_mask(resolution)
