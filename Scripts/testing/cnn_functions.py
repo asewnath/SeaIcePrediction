@@ -299,6 +299,102 @@ def grid_region_mask(resolution):
     return region_maskG.data
 
 
+def get_ice_thickness(month, year, resolution):
+
+    # File paths
+    datapath = '../../Data/'
+    
+    # Get map projection and create regularly spaced grid from this projection
+    m = Basemap(projection='npstere',boundinglat=65,lon_0=0, resolution='l')
+    
+    dx_res = resolution*1000. # 100 km
+    nx = int((m.xmax-m.xmin)/dx_res)+1; ny = int((m.ymax-m.ymin)/dx_res)+1
+    lonsG, latsG, xptsG, yptsG = m.makegrid(nx, ny, returnxy=True)
+    
+    # Get lon/lats on polar sterographic grid
+    lats, lons = ff.get_psnlatslons(datapath)
+    xpts, ypts =m(lons, lats)
+    
+    xptsP, yptsP, thickness=ff.get_pmas_month(m, datapath, year, month)
+    iceThicknessG = griddata((xptsP, yptsP),thickness, (xptsG, yptsG), method='linear')
+    
+    return iceThicknessG
+
+
+def create_input_thickness(month, year, numForecast, imDim, resolution, regBool):
+   #Clear up the number of channels thing
+   #All the bordering could be it's own function later on
+    
+    padding = int(np.floor(imDim/2))
+    data = retrieve_grid(month, year, resolution)
+    dim = np.size(data,0)
+    vertZeros = np.zeros((padding, dim))
+    hortZeros = np.zeros((dim+(2*padding), padding))
+    
+    mat = []
+    matYear = year
+    for index in range(numForecast+1):
+        if(month-index < 0):
+            matYear = matYear - 1
+            grid = retrieve_grid(11, matYear, resolution)
+        else:    
+            grid = retrieve_grid(month-index, matYear, resolution)
+        #Create zero padding manually
+        grid = np.vstack((vertZeros, grid))
+        grid = np.vstack((grid, vertZeros))
+        grid = np.hstack((hortZeros, grid))
+        grid = np.hstack((grid, hortZeros)) 
+        mat.append(grid)
+    
+    if(regBool == 1):
+        regionMask = grid_region_mask(resolution)
+        regionMask = np.vstack((vertZeros, regionMask))
+        regionMask = np.vstack((regionMask, vertZeros))
+        regionMask = np.hstack((hortZeros, regionMask))
+        regionMask = np.hstack((regionMask, hortZeros)) 
+        mat.append(regionMask)
+        numChannels = numForecast+1
+        #mat = np.reshape(mat, (numChannels+1,np.size(mat[0],0),np.size(mat[0],0)))
+    else:
+        numChannels = numForecast   
+        #mat = np.reshape(mat, (numChannels+1,np.size(mat[0],0),np.size(mat[0],0)))
+
+    #Add thickness for current month
+    iceThickness = get_ice_thickness(month, year, resolution)
+    iceThickness = np.vstack((vertZeros, iceThickness))
+    iceThickness = np.vstack((iceThickness, vertZeros))
+    iceThickness = np.hstack((hortZeros, iceThickness))
+    iceThickness = np.hstack((iceThickness, hortZeros))
+    mat.append(iceThickness)
+    numChannels = numChannels+1     
+    mat = np.reshape(mat, (numChannels+1,np.size(mat[0],0),np.size(mat[0],0)))
+
+    #Get ground truth data.. (account for January transition)
+    gtMat = []
+    if(month == 11):
+        gtMat.append(retrieve_grid(0, year+1, resolution))
+        gtMat.append(get_ice_thickness(0, year+1, resolution))
+    else:    
+        gtMat.append(retrieve_grid(month+1, year, resolution))
+        gtMat.append(get_ice_thickness(0, year+1, resolution))
+    
+    #Retrieve grid dimensions
+    matRows = np.size(mat[0],0)
+    matCols = np.size(mat[0],1)
+
+    inputs = []
+    gt = []
+    gtNumChannel = np.size(gtMat,0)
+    #Create sliding window to extract volumes and add them to list
+    for row in range(matRows-(2*padding)):
+        for col in range(matCols-(2*padding)):
+            inputs.append(mat[0:numChannels+1, row:row+imDim, col:col+imDim])
+            gt.append(gtMat[0:gtNumChannel, row, col])
+        
+    size = np.size(inputs,0)    
+    
+    return inputs,gt,size    
+
 
 
 '''
@@ -314,7 +410,7 @@ predictions = np.reshape(predictions, (57, 57))
 '''
 
 #regionMask = grid_regionmask(100)
-grid = create_input(6, 1995, 3, 11, 100, 1)
+#grid = create_input(6, 1995, 3, 11, 100, 1)
 
 
 
