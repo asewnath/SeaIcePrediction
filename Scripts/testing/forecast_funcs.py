@@ -662,21 +662,21 @@ def get_pmask(year, month):
 
 #def get_pmas_month(m, rawdatapath, year, month=4):
 
-def get_pmas_month(rawdatapath, year, month=4):
+def get_pmas_month(m, rawdatapath, year, month):
     
 	fd = open(rawdatapath+'/PIOMAS/heff/heff.H'+str(year), 'rb')
 	dataP = fromfile(file=fd, dtype='f')
 	dataP = reshape(dataP, [12, 120*360])
 	thickness=dataP[month]
-	#gridP = loadtxt(rawdatapath+'/PIOMAS/grid.dat.txt')
+	gridP = loadtxt(rawdatapath+'/PIOMAS/grid.dat.txt')
 
-	#lonsP = gridP[0:4320, :].flatten()
-	#latsP = gridP[4320:, :].flatten()
-	#xptsP,yptsP = m(lonsP, latsP)
+	lonsP = gridP[0:4320, :].flatten()
+	latsP = gridP[4320:, :].flatten()
+	xptsP,yptsP = m(lonsP, latsP)
 
 	thickness=ma.masked_where(thickness<0.01, thickness)
 
-	return thickness#xptsP, yptsP, thickness
+	return xptsP, yptsP, thickness
 
 def get_ice_thickness(rawdatapath, startYear, forecastYear, month):
     thickness = []

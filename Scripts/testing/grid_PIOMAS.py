@@ -24,7 +24,7 @@ import forecast_funcs as ff
 
 
 
-m = Basemap(projection='npstere',boundinglat=65,lon_0=0, resolution='l'  )
+#m = Basemap(projection='npstere',boundinglat=65,lon_0=0, resolution='l'  )
 
 #poleStr='A'# 'A: Arctic, AA: Antarctic
 month=7 # 5=June, 0=January
@@ -40,7 +40,7 @@ datapath = '../../Data/'
 # Get map projection and create regularly spaced grid from this projection
 m = Basemap(projection='npstere',boundinglat=65,lon_0=0, resolution='l')
 
-dx_res = 100000. # 100 km
+dx_res = 50000. # 100 km
 nx = int((m.xmax-m.xmin)/dx_res)+1; ny = int((m.ymax-m.ymin)/dx_res)+1
 grid_str=str(int(dx_res/1000))+'km'
 lonsG, latsG, xptsG, yptsG = m.makegrid(nx, ny, returnxy=True)
@@ -72,12 +72,12 @@ month=4 #June
 
 #for year in xrange(start_year, end_year+1, 1):
 	#print year
-xptsP, yptsP, thickness=ff.get_pmas_month(m, rawdatapath, year,month=month)#Figure out with this means by month please
+xptsP, yptsP, thickness=ff.get_pmas_month(m, rawdatapath, year, month)#Figure out with this means by month please
 
-#thickness_year = griddata((xptsP, yptsP),thickness, (xpts100, ypts100), method='linear')
+ice_thicknessG = griddata((xptsP, yptsP),thickness, (xptsG, yptsG), method='linear')
 #thickness_year_ma=ma.masked_where(thickness_year<0.01, thickness_year)
 
-ice_thicknessG = griddata((xpts.flatten(), ypts.flatten()),thickness.flatten(), (xptsG, yptsG), method='linear')
+#ice_thicknessG = griddata((xpts.flatten(), ypts.flatten()),thickness.flatten(), (xptsG, yptsG), method='linear')
 
 #thickness_year.dump(dataoutpath+'pmas'+grid_str+str(year)+str(month))
 

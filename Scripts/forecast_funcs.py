@@ -637,7 +637,7 @@ def get_pmask(year, month):
 	
 	return pmask
 
-def get_pmas_month(m, rawdatapath, year, month=4):
+def get_pmas_month(m, rawdatapath, year, month):
 
 	fd = open(rawdatapath+'/PIOMAS/heff/heff.H'+str(year), 'rb')
 	dataP = fromfile(file=fd, dtype='f')
