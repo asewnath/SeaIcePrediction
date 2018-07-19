@@ -407,6 +407,8 @@ def create_input_thickness(month, year, numForecast, imDim, resolution, regBool)
         gtMat.append(retrieve_grid(month+1, year, resolution))
         gtMat.append(get_ice_thickness(0, year+1, resolution))
     
+    gtMat = np.reshape(gtMat, (2,np.size(gtMat[0],0),np.size(gtMat[0],0)))
+    
     #Retrieve grid dimensions
     matRows = np.size(mat[0],0)
     matCols = np.size(mat[0],1)
