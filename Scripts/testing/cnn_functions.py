@@ -13,6 +13,15 @@ import keras
 
 #month=2 # 5=June, 0=January
 
+def get_lat_lon_arr(resolution):
+    
+    datapath = '../../Data/'
+    m = Basemap(projection='npstere',boundinglat=65,lon_0=0, resolution='l')
+    dx_res = resolution * 1000
+    nx = int((m.xmax-m.xmin)/dx_res)+1; ny = int((m.ymax-m.ymin)/dx_res)+1
+    lonsG, latsG, _, _ = m.makegrid(nx, ny, returnxy=True)  
+    return latsG, lonsG
+
 def retrieve_grid(month, year, resolution):
     
     poleStr='A'# 'A: Arctic, AA: Antarctic
@@ -66,7 +75,13 @@ def retrieve_grid(month, year, resolution):
     test = np.where(latsG>pmask)
     gridData = ice_conc_ma.data
     gridData[ice_conc_ma.mask == True] = 0
-    gridData[test] = 1
+    
+    #WARNING: Super ghetto solution to not just set the hole to 1
+    arr1 = np.arange(np.min(test[0]), np.max(test[0]))
+    arr2 = np.ones((1, np.size(arr1)), dtype=np.int ) * (np.min(test[0])-1)
+    tup  = (arr1, arr2)
+    gridMean = sum(gridData[tup])/np.size(arr1)
+    gridData[test] = gridMean #fix
     
     return gridData
     
@@ -179,6 +194,8 @@ def get_month_str(month):
 
 def create_input_with_predictions(predList, month, year, numForecast, imDim, resolution, regBool):
     
+    #Take out all constants! Unstable logic
+    
     padding = int(np.floor(imDim/2))
     data = retrieve_grid(month, year, resolution)
     dim = np.size(data,0)
@@ -197,8 +214,12 @@ def create_input_with_predictions(predList, month, year, numForecast, imDim, res
         grid = np.vstack((grid, vertZeros))
         grid = np.hstack((hortZeros, grid))
         grid = np.hstack((grid, hortZeros))
-        monthMod = monthMod - 1
-        numForMod = numForMod - 1
+        if(monthMod-1 < 0):
+            monthMod = 11
+        else:    
+            monthMod = monthMod - 1
+        if(index > 0):    
+            numForMod = numForMod - 1
         mat.append(grid)        
     
     subVal=0
@@ -227,7 +248,7 @@ def create_input_with_predictions(predList, month, year, numForecast, imDim, res
         regionMask = np.hstack((regionMask, hortZeros)) 
         mat.append(regionMask)
         numChannels = numForecast+1
-        mat = np.reshape(mat, (numChannels+1,np.size(mat[0],0),np.size(mat[0],0)))
+        mat = np.reshape(mat, (numChannels+2,np.size(mat[0],0),np.size(mat[0],0)))
     else:
         numChannels = numForecast   
         mat = np.reshape(mat, (numChannels+1,np.size(mat[0],0),np.size(mat[0],0)))
@@ -247,7 +268,7 @@ def create_input_with_predictions(predList, month, year, numForecast, imDim, res
     #Create sliding window to extract volumes and add them to list
     for row in range(matRows-(2*padding)):
         for col in range(matCols-(2*padding)):
-            inputs.append(mat[0:numForecast+1, row:row+imDim, col:col+imDim])
+            inputs.append(mat[0:numForecast+2, row:row+imDim, col:col+imDim])
             gt.append(gtGrid[row, col])
         
     size = np.size(inputs,0)    
@@ -427,6 +448,88 @@ def create_input_thickness(month, year, numForecast, imDim, resolution, regBool)
     return inputs,gt,size    
 
 
+def create_input_with_pred_thick(month, year, numForecast, imDim, resolution, regBool):
+
+    padding = int(np.floor(imDim/2))
+    data = retrieve_grid(month, year, resolution)
+    dim = np.size(data,0)
+    vertZeros = np.zeros((padding, dim))
+    hortZeros = np.zeros((dim+(2*padding), padding))
+    
+    mat = []
+    matYear = year
+    monthMod = month
+    numForMod = numForecast
+    #Pad the predictions:
+    for index in range(np.size(predList, 0)):
+        grid = predList[index]
+        #Create zero padding manually
+        grid = np.vstack((vertZeros, grid))
+        grid = np.vstack((grid, vertZeros))
+        grid = np.hstack((hortZeros, grid))
+        grid = np.hstack((grid, hortZeros))
+        if(monthMod-1 < 0):
+            monthMod = 11
+        else:    
+            monthMod = monthMod - 1
+        if(index > 0):    
+            numForMod = numForMod - 1
+        mat.append(grid)        
+    
+    subVal=0
+    for index in range(numForMod+1):   
+        if(monthMod-subVal < 0):
+            monthMod = 11
+            matYear = matYear - 1
+            grid = retrieve_grid(monthMod, matYear, resolution)
+            subVal = 0 #reset value to subtract
+        else:    
+            grid = retrieve_grid(monthMod-subVal, matYear, resolution)
+        #Create zero padding manually
+        grid = np.vstack((vertZeros, grid))
+        grid = np.vstack((grid, vertZeros))
+        grid = np.hstack((hortZeros, grid))
+        grid = np.hstack((grid, hortZeros)) 
+        mat.append(grid)
+        subVal = subVal+1
+        
+    
+    if(regBool == 1):
+        regionMask = grid_region_mask(resolution)
+        regionMask = np.vstack((vertZeros, regionMask))
+        regionMask = np.vstack((regionMask, vertZeros))
+        regionMask = np.hstack((hortZeros, regionMask))
+        regionMask = np.hstack((regionMask, hortZeros)) 
+        mat.append(regionMask)
+        numChannels = numForecast+1
+        mat = np.reshape(mat, (numChannels+2,np.size(mat[0],0),np.size(mat[0],0)))
+    else:
+        numChannels = numForecast   
+        mat = np.reshape(mat, (numChannels+1,np.size(mat[0],0),np.size(mat[0],0)))
+
+    #Get ground truth data.. (account for January transition)
+    if(month == 11):
+        gtGrid = retrieve_grid(0, year+1, resolution)
+    else:    
+        gtGrid = retrieve_grid(month+1, year, resolution)
+    
+    #Retrieve grid dimensions
+    matRows = np.size(mat[0],0)
+    matCols = np.size(mat[0],1)
+
+    inputs = []
+    gt = []
+    #Create sliding window to extract volumes and add them to list
+    for row in range(matRows-(2*padding)):
+        for col in range(matCols-(2*padding)):
+            inputs.append(mat[0:numForecast+2, row:row+imDim, col:col+imDim])
+            gt.append(gtGrid[row, col])
+        
+    size = np.size(inputs,0)    
+        
+    return inputs, gt, size  
+
+
 
 '''
 data, groundTruth, size = create_input(6, 1990, 6,  15, 100) #6=July
@@ -443,7 +546,7 @@ predictions = np.reshape(predictions, (57, 57))
 #regionMask = grid_regionmask(100)
 #grid = create_input(6, 1995, 3, 11, 100, 1)
 
-
+#grid = retrieve_grid(6, 2012, 25)
 
 
 
