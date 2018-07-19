@@ -177,7 +177,7 @@ def get_month_str(month):
     return monthStr      
     
 
-def create_input_with_predictions(predList, month, year, numForecast, imDim, resolution):
+def create_input_with_predictions(predList, month, year, numForecast, imDim, resolution, regBool):
     
     padding = int(np.floor(imDim/2))
     data = retrieve_grid(month, year, resolution)
@@ -201,20 +201,36 @@ def create_input_with_predictions(predList, month, year, numForecast, imDim, res
         numForMod = numForMod - 1
         mat.append(grid)        
     
-    for index in range(numForMod+1):
-        if(monthMod-index < 0):
+    subVal=0
+    for index in range(numForMod+1):   
+        if(monthMod-subVal < 0):
+            monthMod = 11
             matYear = matYear - 1
-            grid = retrieve_grid(11, matYear, resolution) #FIX
+            grid = retrieve_grid(monthMod, matYear, resolution)
+            subVal = 0 #reset value to subtract
         else:    
-            grid = retrieve_grid(month-index, matYear, resolution)
+            grid = retrieve_grid(monthMod-subVal, matYear, resolution)
         #Create zero padding manually
         grid = np.vstack((vertZeros, grid))
         grid = np.vstack((grid, vertZeros))
         grid = np.hstack((hortZeros, grid))
         grid = np.hstack((grid, hortZeros)) 
         mat.append(grid)
+        subVal = subVal+1
         
-    mat = np.reshape(mat, (numForecast+1,np.size(mat[0],0),np.size(mat[0],0)))
+    
+    if(regBool == 1):
+        regionMask = grid_region_mask(resolution)
+        regionMask = np.vstack((vertZeros, regionMask))
+        regionMask = np.vstack((regionMask, vertZeros))
+        regionMask = np.hstack((hortZeros, regionMask))
+        regionMask = np.hstack((regionMask, hortZeros)) 
+        mat.append(regionMask)
+        numChannels = numForecast+1
+        mat = np.reshape(mat, (numChannels+1,np.size(mat[0],0),np.size(mat[0],0)))
+    else:
+        numChannels = numForecast   
+        mat = np.reshape(mat, (numChannels+1,np.size(mat[0],0),np.size(mat[0],0)))
 
     #Get ground truth data.. (account for January transition)
     if(month == 11):
