@@ -28,15 +28,14 @@ def create_model():
     #I think another conv layer may help
     #probably want to increase kernel size to use that spatial information before pooling
     model = keras.models.Sequential()
-    model.add(keras.layers.Conv2D(64, kernel_size=(3, 3), strides=(1, 1),
+    model.add(keras.layers.Conv2D(64, kernel_size=(2, 2), strides=(1, 1),
                      activation='relu', data_format="channels_first",
                      padding='valid',
                      input_shape=(numChannels, imageSize, imageSize)))
-    model.add(keras.layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2),
-                                        data_format="channels_first", padding='valid'))
-    model.add(keras.layers.Conv2D(128, (3, 3), activation='relu', padding='same', 
+    model.add(keras.layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), d'))
+    model.add(keras.layers.Conv2D(128, (2, 2), activation='relu', padding='same', 
                                   data_format="channels_first"))
-    model.add(keras.layers.MaxPooling2D(pool_size=(2, 2), padding='same',
+    model.add(keras.layers.MaxPooling2D(pool_size=(2, 2), padding='valid',
                                         data_format="channels_first"))
     #model.add(keras.layers.Conv2D(32, (2, 2), activation='relu',
     #                              data_format="channels_first"))
@@ -48,7 +47,7 @@ def create_model():
     model.add(keras.layers.Dense(2, activation='linear'))
     
     # Configure a model for mean-squared error regression.
-    model.compile(optimizer=keras.optimizers.Adam(),
+    model.compile(optimizer=keras.optimizers.Adagrad(),
                   loss='logcosh',      
                   metrics=['mae'])  # mean absolute error
   
