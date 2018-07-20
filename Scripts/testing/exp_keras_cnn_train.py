@@ -28,27 +28,26 @@ def create_model():
     #I think another conv layer may help
     #probably want to increase kernel size to use that spatial information before pooling
     model = keras.models.Sequential()
-    model.add(keras.layers.Conv2D(64, kernel_size=(2, 2), strides=(1, 1),
+    model.add(keras.layers.Conv2D(64, kernel_size=(3, 3), strides=(1, 1),
                      activation='relu', data_format="channels_first",
                      padding='valid',
                      input_shape=(numChannels, imageSize, imageSize)))
-    model.add(keras.layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), d'))
-    model.add(keras.layers.Conv2D(128, (2, 2), activation='relu', padding='same', 
+    model.add(keras.layers.Conv2D(128, (3, 3), activation='relu', padding='same', 
                                   data_format="channels_first"))
+    model.add(keras.layers.SeparableConv2D(128, (2, 2), activation='relu', padding='same', 
+                                  data_format="channels_first"))
+    model.add(keras.layers.Conv2D(32, (2, 2), activation='relu', padding='same', 
+                                  data_format="channels_first"))       
     model.add(keras.layers.MaxPooling2D(pool_size=(2, 2), padding='valid',
                                         data_format="channels_first"))
-    #model.add(keras.layers.Conv2D(32, (2, 2), activation='relu',
-    #                              data_format="channels_first"))
-    #model.add(keras.layers.MaxPooling2D(pool_size=(2, 2), padding='same',
-    #                                    data_format="channels_first"))
     model.add(keras.layers.Flatten())
-    model.add(keras.layers.Dense(40, activation='relu'))
+    model.add(keras.layers.Dense(50, activation='relu'))
     model.add(keras.layers.Dropout(0.2))
     model.add(keras.layers.Dense(2, activation='linear'))
     
     # Configure a model for mean-squared error regression.
-    model.compile(optimizer=keras.optimizers.Adagrad(),
-                  loss='logcosh',      
+    model.compile(optimizer=keras.optimizers.Adadelta(),
+                  loss='mae',      
                   metrics=['mae'])  # mean absolute error
   
     return model
@@ -83,14 +82,14 @@ for year in range(startYear, stopYear+1):
             model = create_model()
             model.summary()
         else:
-            model = keras.models.load_model('model71918_1month.h5')
+            model = keras.models.load_model('model72018_1month.h5')
         
         print("Year:" + str(year) + ",  Month:" + str(months[index]))
         #increase batch size to 200
         model.fit(data, labels, batch_size=batchSize, verbose=2,
                   steps_per_epoch=None, epochs=1)
 
-        model.save('model71918_1month.h5')
+        model.save('model72018_1month.h5')
 
 
 

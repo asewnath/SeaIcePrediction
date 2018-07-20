@@ -76,8 +76,8 @@ def exp_create_input(month, year, numForecast, imDim, resolution):
         iceThickness = get_ice_thickness(0, year+1, resolution)
         gtMat.append(iceThickness/100)
     else:   
-        gtMat.append(retrieve_grid(month+2, year, resolution))
-        iceThickness = get_ice_thickness(month+2, year, resolution)
+        gtMat.append(retrieve_grid(month+1, year, resolution))
+        iceThickness = get_ice_thickness(month+1, year, resolution)
         gtMat.append(iceThickness/100)    
     gtMat = np.reshape(gtMat, (np.size(gtMat,0),np.size(gtMat[0],0),np.size(gtMat[0],0)))
     

@@ -18,7 +18,7 @@ resolution = 100
 regBool = 1
 
 #Load model for evaluation
-model = keras.models.load_model('model71918_1month.h5')
+model = keras.models.load_model('model71918_2month.h5')
 
 #Get test data to retrieve predictions for month+1
 year  = 2015
@@ -34,7 +34,7 @@ dim = int(np.sqrt(size))
 month_1_pred = np.reshape(month_1_pred, (dim, dim))
 #border with zeroes to see it
 month_1_pred = border_grid(month_1_pred, 2)
-graph_pred_truth(month_1_pred, month+1, year, resolution) #July
+graph_pred_truth(month_1_pred, month+2, year, resolution) #July
 #grid = retrieve_grid(month+1, year, resolution)
 
 
