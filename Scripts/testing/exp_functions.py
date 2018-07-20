@@ -28,6 +28,7 @@ def border_grid(grid, padding):
     
     return grid
 
+grid = retrieve_grid(6, 2013, 100)
 
 def exp_create_input(month, year, numForecast, imDim, resolution):
 
@@ -43,32 +44,41 @@ def exp_create_input(month, year, numForecast, imDim, resolution):
             monthMod = 11
             matYear = matYear - 1
             grid = retrieve_grid(monthMod, matYear, resolution)
-            #grid = border_grid(grid, padding)
+            grid = border_grid(grid, padding)
             subVal = 0 #reset value to subtract 
             mat.append(grid)
             iceThickness = get_ice_thickness(monthMod, matYear, resolution)
-            #iceThickness = border_grid(iceThickness, padding)
+            iceThickness = border_grid(iceThickness, padding)
             mat.append(iceThickness/100) #scaling  
         else:    
             grid = retrieve_grid(monthMod-subVal, matYear, resolution)
-            #grid = border_grid(grid, imDim)
+            grid = border_grid(grid, padding)
             mat.append(grid)
             iceThickness = get_ice_thickness(monthMod-subVal, matYear, resolution)
-            #iceThickness = border_grid(iceThickness, padding)
+            iceThickness = border_grid(iceThickness, padding)
             mat.append(iceThickness/100) #scaling    
         
         subVal = subVal+1
      
     
-    lats, lons = get_lat_lon_arr(resolution)
-    lats = lats/100
-    lons = lons/100
-    mat.append(lats)
-    mat.append(lons)
+    #lats, lons = get_lat_lon_arr(resolution)
+    #lats = lats/100
+    #lons = lons/100
+    #mat.append(lats)
+    #mat.append(lons)
+    
+    xDim = np.size(mat[0], 0)
+    #yDim = np.size(mat[0], 1)
+    
+    #Create pixel coordinate matricies (includes the borders)
+    xVect = np.arange(0, xDim) / xDim
+    xMat = np.tile(xVect, (xDim, 1))
+    yMat = xMat.transpose()
+    mat.append(xMat)
+    mat.append(yMat)
     
     mat = np.reshape(mat, (np.size(mat,0),np.size(mat[0],0),np.size(mat[0],0)))
-    
-    
+     
     gtMat = []
     #Get ground truth data.. (account for January transition)
     if(month == 11):

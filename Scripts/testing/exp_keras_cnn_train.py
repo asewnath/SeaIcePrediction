@@ -82,14 +82,14 @@ for year in range(startYear, stopYear+1):
             model = create_model()
             model.summary()
         else:
-            model = keras.models.load_model('model72018_1month.h5')
+            model = keras.models.load_model('model72018_pixpos.h5')
         
         print("Year:" + str(year) + ",  Month:" + str(months[index]))
         #increase batch size to 200
         model.fit(data, labels, batch_size=batchSize, verbose=2,
                   steps_per_epoch=None, epochs=1)
 
-        model.save('model72018_1month.h5')
+        model.save('model72018_pixpos.h5')
 
 
 
