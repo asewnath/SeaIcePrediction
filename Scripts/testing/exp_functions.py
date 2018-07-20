@@ -7,10 +7,12 @@ from pylab import *
 from mpl_toolkits.basemap import Basemap
 from scipy.interpolate import griddata
 from netCDF4 import Dataset
+import forecast_funcs as ff
 
 from cnn_functions import get_lat_lon_arr
 from cnn_functions import retrieve_grid
 from cnn_functions import get_ice_thickness
+from cnn_functions import get_month_str
 #import numpy as np
 
 def border_grid(grid, padding):
@@ -96,3 +98,7 @@ def exp_create_input(month, year, numForecast, imDim, resolution):
     size = np.size(inputs,0) 
 
     return inputs, gt, size
+
+
+
+

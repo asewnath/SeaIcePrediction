@@ -9,13 +9,13 @@ from cnn_functions import graph_pred_truth
 
 #MAKE SURE THAT THESE MATCH THE PARAMETERS IN TRAINING
 imageSize = 21
-numForecast = 5
+numForecast = 6
 resolution = 100
 
 regBool = 1
 
 #Load model for evaluation
-model = keras.models.load_model('my_modeltest.h5')
+model = keras.models.load_model('my_modelthick.h5')
 
 #Get test data to retrieve predictions for month+1
 year  = 2013
@@ -26,6 +26,7 @@ data   = np.float32(data)
 
 month_1_pred = model.predict(data)
 dim = int(np.sqrt(size))
+month_1_pred = month_1_pred[:,0]
 month_1_pred = np.reshape(month_1_pred, (dim, dim))
 graph_pred_truth(month_1_pred, month+1, year, resolution) #July
 
