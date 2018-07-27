@@ -181,7 +181,7 @@ def get_month_str(month):
     elif(month==7):
         monthStr = 'August'
     elif(month==8):
-        monthStr = 'September'   
+        monthStr = 'Sept'   
     elif(month==9):
         monthStr = 'October'
     elif(month==10):

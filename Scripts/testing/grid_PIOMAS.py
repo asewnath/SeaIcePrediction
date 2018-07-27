@@ -84,7 +84,7 @@ ice_thicknessG = griddata((xptsP, yptsP),thickness, (xptsG, yptsG), method='line
 fig = figure(figsize=(6,6))
 ax1=gca()
 
-im1 = m.pcolormesh(xptsG , yptsG, ice_thicknessG, cmap=cm.Blues_r, vmin=0, vmax=1,shading='flat', zorder=2)
+im1 = m.pcolormesh(xptsG , yptsG, ice_thicknessG, cmap=cm.Greys_r, vmin=0, vmax=1,shading='flat', zorder=2)
 
 #m.drawcoastlines(linewidth=0.25, zorder=5)
 #m.drawparallels(np.arange(90,-90,-10), linewidth = 0.25, zorder=3)

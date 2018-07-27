@@ -20,7 +20,7 @@ resolution = 100
 regBool = 1
 
 #Load model for evaluation
-model = keras.models.load_model('model72318_2.h5')
+model = keras.models.load_model('model72318_pixpos.h5')
 
 #Get test data to retrieve predictions for month+1
 year  = 2015
