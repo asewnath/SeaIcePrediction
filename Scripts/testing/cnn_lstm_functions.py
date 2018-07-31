@@ -14,8 +14,10 @@ from netCDF4 import Dataset
 import forecast_funcs as ff
 import statsmodels.api as sm
 from scipy import stats
+from random import shuffle
+from random import Random
 
-
+#Take this out and just load in the grids like how Alek did. Run separately for different resolution databases
 def get_conc_grid(month, year, resolution):
     
     poleStr='A'# 'A: Arctic, AA: Antarctic
@@ -82,6 +84,10 @@ def get_conc_grid(month, year, resolution):
 
 def get_thick_grid(month, year, resolution):
 
+    """
+    Purpose: 
+    """
+    
     # File paths
     datapath = '../../Data/'
     
@@ -104,6 +110,12 @@ def get_thick_grid(month, year, resolution):
 
 def border_grid(grid, padding):
     
+    """
+    Purpose: Pad grid with zeros according to the image size so that each grid
+             available is used for training. Especially useful if there's 
+             data at the edge.
+    """
+    
     dim = np.size(grid,0)
     vertZeros = np.zeros((padding, dim))
     hortZeros = np.zeros((dim+(2*padding), padding))
@@ -123,13 +135,13 @@ def build_ice_cube(mat, month, year, resolution, padding):
     Purpose: Build 3D volume for time series, focusing only on adding ice
              features
     """
-    #conc = get_conc_grid(month, year, resolution)
-    #mat.append(border_grid(conc, padding))
-    #thick = get_thick_grid(month, year, resolution)
-    #mat.append(border_grid(thick, padding))
+    conc = get_conc_grid(month, year, resolution)
+    mat.append(border_grid(conc, padding))
+    thick = get_thick_grid(month, year, resolution)
+    mat.append(border_grid(thick, padding))
     
-    mat.append(get_conc_grid(month, year, resolution))
-    mat.append(get_thick_grid(month, year, resolution))
+    #mat.append(get_conc_grid(month, year, resolution))
+    #mat.append(get_thick_grid(month, year, resolution))
     
     return mat
 
@@ -145,8 +157,8 @@ def create_dataset(startYear, stopYear, startMonth, stopMonth, resolution,
     padding = int(np.floor(imDim/2))
     
     #Create pixel coordinate matricies (includes the borders)
-    xVect = np.arange(0, 57) / 57
-    xMat = np.tile(xVect, (57, 1))
+    xVect = np.arange(0, 63) / 63
+    xMat = np.tile(xVect, (63, 1))
     yMat = xMat.transpose()
     
     feat = []
@@ -179,11 +191,11 @@ def create_dataset(startYear, stopYear, startMonth, stopMonth, resolution,
             if(month == 11):
                 gtMat.append(get_conc_grid(1, year+1, resolution))
                 iceThickness = get_thick_grid(0, year+1, resolution)
-                gtMat.append(iceThickness/100)
+                gtMat.append(iceThickness/10)
             else:   
                 gtMat.append(get_conc_grid(month+1, year, resolution))
                 iceThickness = get_thick_grid(month+1, year, resolution)
-                gtMat.append(iceThickness/100)  
+                gtMat.append(iceThickness/10)  
             #Reshaping into numpy 3D array    
             gtMat = np.reshape(gtMat, (np.size(gtMat,0),np.size(gtMat[0],0),np.size(gtMat[0],1)))
             
@@ -203,6 +215,90 @@ def create_dataset(startYear, stopYear, startMonth, stopMonth, resolution,
               
     return feat, groundTruth
 
+def pred_create_dataset(monthList, month, year, resolution, 
+                   numTimeSeries, imDim):
+    
+    """
+    Purpose: Create the grid cube required for time distributed training of
+             the keras CNN-LSTM model. Input will include predicted months
+    """
+    
+    padding = int(np.floor(imDim/2))
+    
+    #Create pixel coordinate matricies (includes the borders)
+    xVect = np.arange(0, 63) / 63
+    xMat = np.tile(xVect, (63, 1))
+    yMat = xMat.transpose()
+    
+    feat = []
+    groundTruth = []
+
+    #Creating 3D volume for 3 element time series
+    mat = []
+    gtMat = []
+    
+    monthMod = month
+    numTimeSeriesMod = numTimeSeries
+    #Pad the predictions:
+    for index in range(np.size(monthList, 0)):
+        grid = monthList[index]
+        iceConcGrid = grid[0]
+        iceConcGrid = border_grid(iceConcGrid, padding)
+        mat.append(iceConcGrid)
+        iceThickGrid = grid[1]
+        iceThickGrid = border_grid(iceThickGrid, padding)
+        mat.append(iceThickGrid)
+        if(monthMod-1 < 0):
+            monthMod = 11
+        else:    
+            monthMod = monthMod - 1
+        #if(index > 0):    
+        numTimeSeriesMod = numTimeSeriesMod - 1    
+        mat.append(xMat)
+        mat.append(yMat)   
+    
+    
+    for index in range(numTimeSeriesMod):
+    
+        if(monthMod-index < 0):
+            monthMod = 11
+            year = year-1
+            build_ice_cube(mat, monthMod, year, resolution, padding)
+        else:
+            build_ice_cube(mat, monthMod-index, year, resolution, padding) 
+        #Add position arrays
+        mat.append(xMat)
+        mat.append(yMat)
+ 
+    #Reshaping into numpy 4D array
+    mat = np.reshape(mat, (numTimeSeries, int(np.size(mat, 0)/numTimeSeries), np.size(mat[0],0), np.size(mat[0], 1)))
+    
+    #Get ground truth data (account for January transition)
+    if(month == 11):
+        gtMat.append(get_conc_grid(1, year+1, resolution))
+        iceThickness = get_thick_grid(0, year+1, resolution)
+        gtMat.append(iceThickness/10)
+    else:   
+        gtMat.append(get_conc_grid(month+1, year, resolution))
+        iceThickness = get_thick_grid(month+1, year, resolution)
+        gtMat.append(iceThickness/10)  
+    #Reshaping into numpy 3D array    
+    gtMat = np.reshape(gtMat, (np.size(gtMat,0),np.size(gtMat[0],0),np.size(gtMat[0],1)))
+    
+    #Retrieve grid dimensions
+    matChannels = np.size(mat, 1)
+    matRows = np.size(mat[0],1)
+    matCols = np.size(mat[0],2)
+    gtChannels = 2 #predicting both ice concentration and thickness    
+    
+    #Create sliding window to extract volumes and add them to list
+    for row in range(matRows-(2*padding)):
+        for col in range(matCols-(2*padding)):
+            feat.append(mat[0:numTimeSeries, 0:matChannels, row:row+imDim, col:col+imDim])
+            groundTruth.append(gtMat[0:gtChannels, row, col])   
+              
+    return feat, groundTruth
+
 
 def shuffle_input(feat, groundTruth): 
     
@@ -213,7 +309,8 @@ def shuffle_input(feat, groundTruth):
     return feat, groundTruth
 
 
-feat, groundTruth = create_dataset(1985, 2014, 5, 9, 100, 3, 7)
-
+#feat, groundTruth = create_dataset(1985, 2014, 5, 9, 100, 3, 7)
+#np.save("cnn_lstm_feat.npy", feat)
+#np.save("cnn_lstm_gt.npy", groundTruth)
 
 

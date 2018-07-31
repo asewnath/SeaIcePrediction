@@ -49,7 +49,35 @@ def get_detrend_grid(month, startYear, stopYear, resolution):
     finalCellForecast = np.reshape(finalCellForecast, (57, 57))        
     return finalCellForecast
     
+def pred_detrend_grid(month, fMonth,startYear, stopYear, resolution):
+    
+    #get all sea ice concentration grids for the specific month and stack them
+    #years = np.arange(startYear, stopYear+1)
 
+    monthIceConc = retrieve_grid(month, startYear, resolution)
+    finalMonthIceConc = retrieve_grid(fMonth, startYear, resolution)
+    for year in range(startYear+1, stopYear+1):
+        monthIceConc = np.dstack((monthIceConc, retrieve_grid(month, year, resolution)))
+        finalMonthIceConc = np.dstack((finalMonthIceConc, retrieve_grid(fMonth, year, resolution)))
+        
+    fMonthIceConc = retrieve_grid(month, stopYear+1, 100)
+    #for each cell vector, do all that detrending stuff, make list
+    finalCellForecast = []
+    for row in range(np.size(monthIceConc, 0)):
+        for col in range(np.size(monthIceConc, 1)):
+            vect = monthIceConc[row, col, :]
+            fVect = finalMonthIceConc[row, col, :]
+            #trendT, interceptT, _, _, _ = stats.linregress(fVect,vect)
+            #forecast = trendT*(fMonthIceConc[row, col]) + interceptT
+            model=sm.OLS(fVect, vect)
+            fit=model.fit()
+            cellForecast = fit.predict(fMonthIceConc[row, col])[0]
+            finalCellForecast.append(cellForecast)
+    
+    #reshape list into final grid
+    finalCellForecast = np.reshape(finalCellForecast, (57, 57))        
+    return finalCellForecast    
+    
 
 def border_grid(grid, padding):
     
