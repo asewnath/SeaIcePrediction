@@ -1,5 +1,5 @@
 This folder contains scripts used to experiment with Random Forests and MLPs, but the code
-can be slightly modified to use many different scikit-learn functions
+can be slightly modified to use many different scikit-learn functions.
 
 
 
@@ -25,7 +25,9 @@ can be slightly modified to use many different scikit-learn functions
     -region_seg_experimentation: experimenting with using region mask data and plotting 
                                  the results
     
-    -seasonal_model_forecast: trying out seasonal forecast ensemble model (bad idea plz ignore)
+    -seasonal_model_forecast: trying out seasonal forecast ensemble model. Would not recommend
+                              pursuing, but added the code just in case
     
-    -seasonal_model_testing: testing seasonal forecast models (bad idea plz ignore)
+    -seasonal_model_testing: testing seasonal forecast models. Would not recommend pursuing,
+                             but added the code just in case
         
