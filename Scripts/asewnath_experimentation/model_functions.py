@@ -2,6 +2,7 @@
 Model Experiment Functions
 Author: Akira Sewnath
 Date: 7/27/18
+
 """
 
 import sys
@@ -170,7 +171,7 @@ def create_dataset(startYear, stopYear, startMonth, stopMonth, resolution,
     
     """
     Purpose: Create the grid cube required for time distributed training of
-             the keras CNN-LSTM model. Input will only consider summer months.
+             the keras CNN-LSTM model. 
     """
     
     padding = int(np.floor(imDim/2))
@@ -323,7 +324,9 @@ def pred_create_dataset(monthList, month, year, resolution,
 def shuffle_input(feat, groundTruth): 
     
     """
-    Purpose: Shuffle input features and ground truth
+    Purpose: Shuffle input features and ground truth. Sometimes the machine learning models
+             will do this for you. If you aren't sure, run this anyways because it'll just
+             get more shuffled.
     """
     
     

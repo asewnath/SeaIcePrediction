@@ -12,7 +12,7 @@ import numpy as np
 import keras
 import os
 
-#Control Panel:
+#Parameters
 startYear = 1985
 stopYear  = 2014
 imageSize = 5
@@ -23,6 +23,11 @@ batchSize = 400
 regBool = 1
 
 def create_model():
+    
+    """
+    Purpose: Define the Keras model that will be instantiated. All the arguments in each
+             layer as well as the layers themself
+    """
     
     model = keras.models.Sequential()
     model.add(keras.layers.Conv2D(64, kernel_size=(3, 3), strides=(1, 1),
@@ -63,6 +68,7 @@ for year in range(startYear, stopYear+1):
     for index in range(np.size(months)):
 
         data, groundTruth, size = cnn_create_input(months[index], year, numForecast, imageSize, resolution)
+        #This is shuffling for extra precaution. Sometimes the model will shuffle data for you
         data, labels = shuffle_input(data, groundTruth)
                 
         data   = np.reshape(data, (size, numChannels, imageSize, imageSize))

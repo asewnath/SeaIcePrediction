@@ -45,6 +45,7 @@ cnnArea = predMonth1 * 100
 linArea = linearGrid * 100
 gtArea  = groundTruth * 100
 
+#57 hardcoded for a 7*7 image size
 rmseCnn = np.sqrt((np.sum(cnnArea-gtArea)**2)/(57**2))
 rmseLin = np.sqrt((np.sum(linArea-gtArea)**2)/(57**2))
 
